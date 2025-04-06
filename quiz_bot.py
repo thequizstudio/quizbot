@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import json
 import random
 import asyncio
@@ -26,11 +26,19 @@ answered_correctly = False
 
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True  # Allows the bot to track new member joins
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
     print(f"Quiz bot is online as {bot.user}!")
+    auto_start_quiz.start()  # Start auto-starting the quiz when the bot is ready
+
+@bot.event
+async def on_member_join(member):
+    # Automatically enroll the user when they join the server
+    joined_players.add(member.id)
+    print(f"{member.name} has been auto-enrolled in the quiz!")
 
 @bot.command()
 async def joinquiz(ctx):
@@ -80,10 +88,10 @@ async def ask_next_question(channel):
     await channel.send(f"❓ Question {current_question_index}:\n**{current_question}**")
 
     try:
-        await asyncio.sleep(10)  # Wait for answers
+        await asyncio.sleep(10)  # Wait for 10 seconds for answers
         if not answered_correctly:
             await channel.send(f"⏰ Time's up! The correct answer was: **{current_answer}**")
-        await asyncio.sleep(10)  # Wait before next question
+        await asyncio.sleep(6)  # Wait before next question
         await ask_next_question(channel)
     except Exception as e:
         print("Error during question timing:", e)
@@ -133,6 +141,14 @@ async def on_message(message):
         await message.channel.send(
             f"⚡ Fastest Finger! ✅ Correct, {player}! +15 points 🎉 (Total: {players[player]} points)"
         )
+
+# Auto-start quiz every time after 60 seconds (after quiz ends)
+@tasks.loop(seconds=60)
+async def auto_start_quiz():
+    if not game_active:
+        # Automatically start the quiz in a specific channel
+        channel = bot.get_channel(YOUR_CHANNEL_ID_HERE)  # Replace with your channel ID
+        await startquiz(channel)
 
 # Start the bot
 load_dotenv()
