@@ -73,6 +73,11 @@ async def ask_next_question(channel):
         game_active = False
         await channel.send("🎉 Round over!")
         await show_leaderboard(channel)
+        
+        # Start a new game after 30 seconds
+        await asyncio.sleep(30)  # Wait for 30 seconds before starting a new game
+        await channel.send("⏳ Starting a new game soon! Join using `!joinquiz`.")
+        await startquiz(channel)  # Start a new game in the same channel
         return
 
     q = current_round_questions[current_question_index]
@@ -113,7 +118,12 @@ async def endquiz(ctx):
         return
 
     game_active = False
-    await ctx.send("🛑 Quiz ended. Starting a new round...!")
+    await ctx.send("🛑 Quiz ended. Starting a new round in 30 seconds...")
+
+    # Start a countdown before the next game
+    await asyncio.sleep(30)  # Wait for 30 seconds
+    await ctx.send("⏳ Starting a new game soon! Join using `!joinquiz`.")
+    await startquiz(ctx)  # Automatically start a new game
 
 @bot.event
 async def on_message(message):
