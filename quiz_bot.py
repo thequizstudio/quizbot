@@ -1,7 +1,3 @@
-@bot.command()
-async def getchannelid(ctx):
-    await ctx.send(f"Channel ID: `{ctx.channel.id}`")
-
 from dotenv import load_dotenv
 import os
 import discord
@@ -113,6 +109,10 @@ async def leaderboard(ctx):
     sorted_scores = sorted(players.items(), key=lambda x: x[1], reverse=True)
     leaderboard_text = "\n".join([f"{name}: {score}" for name, score in sorted_scores])
     await ctx.send(f"🏆 Leaderboard:\n{leaderboard_text}")
+
+@bot.command()
+async def getchannelid(ctx):
+    await ctx.send(f"Channel ID: `{ctx.channel.id}`")
 
 @bot.command()
 async def endquiz(ctx):
