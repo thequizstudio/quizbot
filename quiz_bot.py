@@ -104,11 +104,10 @@ async def ask_next_question(channel):
     q = current_round_questions[current_question_index]
     current_question = q["question"]
     current_answer = q["answer"].lower()
-    answered_correctly = False
+    answered_correctly = False  # Reset the flag for the new question
     answered_this_round = set() # Reset for the new question
 
     current_question_index += 1
-
     # Added permission check for debugging
     permissions = channel.permissions_for(channel.guild.me)
     print(f"Bot has Send Messages permission in #{channel.name}: {permissions.send_messages}")
