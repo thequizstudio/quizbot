@@ -95,7 +95,6 @@ async def ask_next_question(channel):
         await channel.send("🏁 Round over!")
         await show_leaderboard(channel)
         await asyncio.sleep(DELAY_BETWEEN_ROUNDS)
-        # Find the guild the channel belongs to
         for guild in bot.guilds:
             if guild.get_channel(channel.id):
                 await start_new_round(guild)
@@ -109,6 +108,12 @@ async def ask_next_question(channel):
     answered_this_round = set() # Reset for the new question
 
     current_question_index += 1
+
+    # Added permission check for debugging
+    permissions = channel.permissions_for(channel.guild.me)
+    print(f"Bot has Send Messages permission in #{channel.name}: {permissions.send_messages}")
+    print(f"Bot has View Channel permission in #{channel.name}: {permissions.view_channel}")
+
     await channel.send(f"❓ Question {current_question_index}:\n**{current_question}**")
 
     try:
