@@ -19,7 +19,7 @@ questions = load_questions()
 current_question = None
 current_answer = None
 players = {}
-joined_players = set()
+joined_players = set()  # Keep track of players in the game
 game_active = False
 current_round_questions = []
 current_question_index = 0
@@ -27,6 +27,7 @@ answered_correctly = False
 
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True  # Intents to allow member updates
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 time_limit = 10  # Time limit in seconds for answering each question.
@@ -35,36 +36,36 @@ question_start_time = None  # To track when the question was asked.
 @bot.event
 async def on_ready():
     print(f"Quiz bot is online as {bot.user}!")
+    
+    # Automatically start the quiz in the first available text channel
+    for guild in bot.guilds:
+        for channel in guild.text_channels:
+            await start_game(channel)  # Start the game automatically in each text channel
+            break  # Remove this if you want to start in every text channel of the server
+            
+# Start the game in the given channel
+async def start_game(channel):
+    global game_active
+    if game_active:
+        return
 
-@bot.command()
-async def joinquiz(ctx):
-    joined_players.add(ctx.author.id)
-    await ctx.send(f"{ctx.author.name} has joined the quiz!")
+    # Automatically enroll all members present in the channel
+    for member in channel.members:
+        if not member.bot:
+            joined_players.add(member.id)  # Auto-enroll
+
+    game_active = True
+    players.clear()  # Reset scores for a new game
+    current_question_index = 0
+    current_round_questions = random.sample(questions, 10)
+
+    await channel.send("🧠 Quiz started! 10 questions coming up for all members!")
+    await ask_next_question(channel)
 
 @bot.command()
 async def leavequiz(ctx):
     joined_players.discard(ctx.author.id)
     await ctx.send(f"{ctx.author.name} has left the quiz.")
-
-@bot.command()
-async def startquiz(ctx):
-    global game_active, current_question, current_answer, current_round_questions, current_question_index
-
-    if game_active:
-        await ctx.send("A quiz is already running!")
-        return
-
-    if not joined_players:
-        await ctx.send("No players have joined yet! Use !joinquiz to join.")
-        return
-
-    game_active = True
-    players.clear()
-    current_question_index = 0
-    current_round_questions = random.sample(questions, 10)
-
-    await ctx.send("🧠 Quiz started! 10 questions coming up!")
-    await ask_next_question(ctx.channel)
 
 async def ask_next_question(channel):
     global current_question, current_answer, current_question_index, answered_correctly, game_active, question_start_time
@@ -76,10 +77,9 @@ async def ask_next_question(channel):
         
         # Start a new game after 30 seconds
         await asyncio.sleep(30)  # Wait for 30 seconds
-        await channel.send("⏳ Starting a new game soon! Current players can join!")
+        await channel.send("⏳ Starting a new game soon!")
         
-        players.clear() # Clear scores to start fresh
-        await startquiz(channel)  # Start a new game in the same channel
+        await start_game(channel)  # Start a new game in the same channel
         return
 
     q = current_round_questions[current_question_index]
@@ -99,10 +99,6 @@ async def ask_next_question(channel):
     await asyncio.sleep(8)  # Wait before the next question
     await ask_next_question(channel)
 
-@bot.command()
-async def leaderboard(ctx):
-    await show_leaderboard(ctx.channel)
-
 async def show_leaderboard(channel):
     if not players:
         await channel.send("No scores yet.")
@@ -111,21 +107,6 @@ async def show_leaderboard(channel):
     sorted_scores = sorted(players.items(), key=lambda x: x[1], reverse=True)
     leaderboard_text = "\n".join([f"{name}: {score}" for name, score in sorted_scores])
     await channel.send(f"🏆 Final Leaderboard:\n{leaderboard_text}")
-
-@bot.command()
-async def endquiz(ctx):
-    global game_active
-    if not game_active:
-        await ctx.send("No quiz is running.")
-        return
-
-    game_active = False
-    await ctx.send("🛑 Quiz ended. Starting a new round in 30 seconds...")
-
-    # Start a countdown before the next game
-    await asyncio.sleep(30)  # Wait for 30 seconds
-    await ctx.send("⏳ Starting a new game soon! Current players can join!")
-    await startquiz(ctx)  # Automatically start a new game
 
 @bot.event
 async def on_message(message):
