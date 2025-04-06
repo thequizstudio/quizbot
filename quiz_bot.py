@@ -37,12 +37,13 @@ question_start_time = None  # To track when the question was asked.
 async def on_ready():
     print(f"Quiz bot is online as {bot.user}!")
     
-    # Automatically start the quiz in the first available text channel
+    # Start a quiz in the first available text channel of each server
     for guild in bot.guilds:
         for channel in guild.text_channels:
-            await start_game(channel)  # Start the game automatically in each text channel
-            break  # Remove this if you want to start in every text channel of the server
-            
+            if channel.permissions_for(guild.me).send_messages:  # Check if bot can send messages
+                await start_game(channel)  # Start the game automatically in this channel
+                break  # Remove this if you want to start in every text channel of the server
+
 # Start the game in the given channel
 async def start_game(channel):
     global game_active
@@ -51,7 +52,7 @@ async def start_game(channel):
 
     # Automatically enroll all members present in the channel
     for member in channel.members:
-        if not member.bot:
+        if not member.bot:  # Ignore bot members
             joined_players.add(member.id)  # Auto-enroll
 
     game_active = True
@@ -62,11 +63,6 @@ async def start_game(channel):
     await channel.send("🧠 Quiz started! 10 questions coming up for all members!")
     await ask_next_question(channel)
 
-@bot.command()
-async def leavequiz(ctx):
-    joined_players.discard(ctx.author.id)
-    await ctx.send(f"{ctx.author.name} has left the quiz.")
-
 async def ask_next_question(channel):
     global current_question, current_answer, current_question_index, answered_correctly, game_active, question_start_time
 
@@ -74,7 +70,7 @@ async def ask_next_question(channel):
         game_active = False
         await channel.send("🎉 Round over!")
         await show_leaderboard(channel)
-        
+
         # Start a new game after 30 seconds
         await asyncio.sleep(30)  # Wait for 30 seconds
         await channel.send("⏳ Starting a new game soon!")
@@ -88,7 +84,7 @@ async def ask_next_question(channel):
     answered_correctly = False
 
     current_question_index += 1
-    
+
     # Track the time when the question is asked
     question_start_time = time.time()
     await channel.send(f"❓ Question {current_question_index}:\n**{current_question}**")
