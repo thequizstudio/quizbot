@@ -33,8 +33,11 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
-    await bot.wait_until_guild_available()
     print("on_ready event triggered!")
+    while not bot.guilds:
+        print("Waiting for guilds to become available...")
+        await asyncio.sleep(1)  # Wait for 1 second
+
     print(f"Number of guilds connected: {len(bot.guilds)}")
     if bot.guilds:
         guild = bot.guilds[0]
