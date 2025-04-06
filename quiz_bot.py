@@ -20,22 +20,69 @@ current_answer = None
 players = {}
 joined_players = set()
 game_active = False
+auto_start_scheduled = False
 current_round_questions = []
 current_question_index = 0
 answered_correctly = False
 
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True  # Required for on_member_join
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
     print(f"Quiz bot is online as {bot.user}!")
 
+@bot.event
+async def on_member_join(member):
+    global auto_start_scheduled
+
+    joined_players.add(member.id)
+    channel = get_default_channel(member.guild)
+    if channel:
+        await channel.send(f"👋 Welcome {member.name}! You've been auto-enrolled in the quiz!")
+
+    if not game_active and not auto_start_scheduled:
+        auto_start_scheduled = True
+        if channel:
+            await channel.send("⏳ Quiz will start in 20 seconds... Get in quick!")
+
+        await asyncio.sleep(20)
+        if not game_active and joined_players:
+            fake_ctx = await bot.get_context(await channel.fetch_message(channel.last_message_id))
+            await startquiz(fake_ctx)
+
+        auto_start_scheduled = False
+
+def get_default_channel(guild):
+    # Tries to find a general text channel
+    for channel in guild.text_channels:
+        if channel.permissions_for(guild.me).send_messages:
+            return channel
+    return None
+
 @bot.command()
 async def joinquiz(ctx):
+    global auto_start_scheduled
+
+    if ctx.author.id in joined_players:
+        await ctx.send(f"{ctx.author.name}, you're already in the quiz!")
+        return
+
     joined_players.add(ctx.author.id)
     await ctx.send(f"{ctx.author.name} has joined the quiz!")
+
+    if not game_active and not auto_start_scheduled:
+        auto_start_scheduled = True
+        await ctx.send("⏳ Quiz will start in 20 seconds... Get in quick with `!joinquiz`!")
+        await asyncio.sleep(20)
+
+        if not game_active and joined_players:
+            fake_ctx = await bot.get_context(ctx.message)
+            await startquiz(fake_ctx)
+
+        auto_start_scheduled = False
 
 @bot.command()
 async def leavequiz(ctx):
@@ -51,7 +98,7 @@ async def startquiz(ctx):
         return
 
     if not joined_players:
-        await ctx.send("No players have joined yet! Use !joinquiz to join.")
+        await ctx.send("No players have joined yet!")
         return
 
     game_active = True
@@ -80,10 +127,10 @@ async def ask_next_question(channel):
     await channel.send(f"❓ Question {current_question_index}:\n**{current_question}**")
 
     try:
-        await asyncio.sleep(10)  # Wait for answers
+        await asyncio.sleep(10)  # Time to answer
         if not answered_correctly:
             await channel.send(f"⏰ Time's up! The correct answer was: **{current_answer}**")
-        await asyncio.sleep(8)  # Wait before next question
+        await asyncio.sleep(8)
         await ask_next_question(channel)
     except Exception as e:
         print("Error during question timing:", e)
@@ -129,7 +176,7 @@ async def on_message(message):
     if match_score >= 85 and not answered_correctly:
         answered_correctly = True
         player = message.author.name
-        players[player] = players.get(player, 0) + 15  # 10 base + 5 fastest finger
+        players[player] = players.get(player, 0) + 15
         await message.channel.send(
             f"⚡ Fastest Finger! ✅ Correct, {player}! +15 points 🎉 (Total: {players[player]} points)"
         )
