@@ -20,69 +20,48 @@ current_answer = None
 players = {}
 joined_players = set()
 game_active = False
-auto_start_scheduled = False
 current_round_questions = []
 current_question_index = 0
 answered_correctly = False
 
 intents = discord.Intents.default()
 intents.message_content = True
-intents.members = True  # Required for on_member_join
+intents.members = True  # Required to access server members
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
+    global game_active, current_question_index, current_round_questions
+
     print(f"Quiz bot is online as {bot.user}!")
 
-@bot.event
-async def on_member_join(member):
-    global auto_start_scheduled
+    for guild in bot.guilds:
+        # Auto-enroll all visible members
+        for member in guild.members:
+            if not member.bot:
+                joined_players.add(member.id)
 
-    joined_players.add(member.id)
-    channel = get_default_channel(member.guild)
-    if channel:
-        await channel.send(f"👋 Welcome {member.name}! You've been auto-enrolled in the quiz!")
+        # Find a usable text channel
+        channel = None
+        for ch in guild.text_channels:
+            if ch.permissions_for(guild.me).send_messages:
+                channel = ch
+                break
 
-    if not game_active and not auto_start_scheduled:
-        auto_start_scheduled = True
         if channel:
-            await channel.send("⏳ Quiz will start in 20 seconds... Get in quick!")
-
-        await asyncio.sleep(20)
-        if not game_active and joined_players:
-            fake_ctx = await bot.get_context(await channel.fetch_message(channel.last_message_id))
-            await startquiz(fake_ctx)
-
-        auto_start_scheduled = False
-
-def get_default_channel(guild):
-    # Tries to find a general text channel
-    for channel in guild.text_channels:
-        if channel.permissions_for(guild.me).send_messages:
-            return channel
-    return None
+            await channel.send("🧠 Quiz is starting! Auto-enrolling all members...")
+            game_active = True
+            players.clear()
+            current_question_index = 0
+            current_round_questions = random.sample(questions, 10)
+            await ask_next_question(channel)
+        else:
+            print("No accessible channel to send quiz messages in.")
 
 @bot.command()
 async def joinquiz(ctx):
-    global auto_start_scheduled
-
-    if ctx.author.id in joined_players:
-        await ctx.send(f"{ctx.author.name}, you're already in the quiz!")
-        return
-
     joined_players.add(ctx.author.id)
     await ctx.send(f"{ctx.author.name} has joined the quiz!")
-
-    if not game_active and not auto_start_scheduled:
-        auto_start_scheduled = True
-        await ctx.send("⏳ Quiz will start in 20 seconds... Get in quick with `!joinquiz`!")
-        await asyncio.sleep(20)
-
-        if not game_active and joined_players:
-            fake_ctx = await bot.get_context(ctx.message)
-            await startquiz(fake_ctx)
-
-        auto_start_scheduled = False
 
 @bot.command()
 async def leavequiz(ctx):
@@ -98,7 +77,7 @@ async def startquiz(ctx):
         return
 
     if not joined_players:
-        await ctx.send("No players have joined yet!")
+        await ctx.send("No players have joined yet! Use !joinquiz to join.")
         return
 
     game_active = True
@@ -156,7 +135,7 @@ async def endquiz(ctx):
         return
 
     game_active = False
-    await ctx.send("🛑 Quiz ended. Starting a new round...!")
+    await ctx.send("🛑 Quiz ended.")
 
 @bot.event
 async def on_message(message):
