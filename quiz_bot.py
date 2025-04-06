@@ -33,10 +33,11 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
+    await bot.wait_until_guild_available()
     print("on_ready event triggered!")
+    print(f"Number of guilds connected: {len(bot.guilds)}")
     if bot.guilds:
         guild = bot.guilds[0]
-        print(f"Number of guilds connected: {len(bot.guilds)}")
         print(f"First guild: {guild.name} ({guild.id})")
         for channel in guild.text_channels:
             print(f"Checking channel: {channel.name} ({channel.id}) - Permissions: Send Messages={channel.permissions_for(guild.me).send_messages}, Read Messages={channel.permissions_for(guild.me).read_messages}")
