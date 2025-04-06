@@ -1,135 +1,106 @@
-from dotenv import load_dotenv
-import os
 import discord
-from discord.ext import commands
+import asyncio
 import json
 import random
-import asyncio
-from rapidfuzz import fuzz
+from discord.ext import commands
+
+intents = discord.Intents.default()
+intents.messages = True
+intents.message_content = True
+intents.guilds = True
+intents.members = True
+
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 # Load questions from JSON
-def load_questions():
-    with open("questions.json", "r") as f:
-        data = json.load(f)
-        print(f"Loaded {len(data)} questions.")
-        return data
+with open("questions.json", "r") as f:
+    questions = json.load(f)
 
-questions = load_questions()
 current_question = None
-current_answer = None
-players = {}
-joined_players = set()
-game_active = False
-current_round_questions = []
-current_question_index = 0
-answered_correctly = False
+answered_users = set()
+scores = {}
+quiz_running = False
+quiz_channel_id = YOUR_CHANNEL_ID_HERE  # Replace with your channel ID
 
 @bot.event
 async def on_ready():
-    print(f"Quiz bot is online as {bot.user}!")
+    print(f"Logged in as {bot.user.name}")
+    channel = bot.get_channel(quiz_channel_id)
+    await channel.send("📢 Quiz bot is ready! Starting the first round...")
+    await start_quiz()
 
-@bot.command()
-async def joinquiz(ctx):
-    joined_players.add(ctx.author.id)
-    await ctx.send(f"{ctx.author.name} has joined the quiz!")
+async def start_quiz():
+    global current_question, answered_users, scores, quiz_running
 
-@bot.command()
-async def leavequiz(ctx):
-    joined_players.discard(ctx.author.id)
-    await ctx.send(f"{ctx.author.name} has left the quiz.")
+    quiz_running = True
+    answered_users.clear()
+    scores.clear()
 
-@bot.command()
-async def startquiz(ctx):
-    global game_active, current_question, current_answer, current_round_questions, current_question_index
+    channel = bot.get_channel(quiz_channel_id)
+    used_questions = []
 
-    if game_active:
-        await ctx.send("A quiz is already running!")
-        return
+    for i in range(10):  # 10-question round
+        question = random.choice([q for q in questions if q not in used_questions])
+        used_questions.append(question)
+        current_question = question
+        answered_users.clear()
 
-    if not joined_players:
-        await ctx.send("No players have joined yet! Use `!joinquiz` to join.")
-        return
+        await channel.send(f"❓ Question {i + 1}: {question['question']}")
 
-    game_active = True
-    players.clear()
-    current_question_index = 0
-    current_round_questions = random.sample(questions, 10)
+        try:
+            await asyncio.wait_for(wait_for_answers(channel, question), timeout=10.0)
+        except asyncio.TimeoutError:
+            await channel.send(f"⏰ Time's up! The correct answer was: **{question['answer']}**")
 
-    await ctx.send("🧠 Quiz started! 10 questions coming up!")
-    await ask_next_question(ctx.channel)
+        await asyncio.sleep(6)  # wait before next question
 
-async def ask_next_question(channel):
-    global current_question, current_answer, current_question_index, answered_correctly, game_active
+    # End of the quiz
+    await channel.send("🎉 The round is over! Final scores:")
+    sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+    leaderboard = "\n".join(
+        [f"{idx + 1}. <@{user_id}> - {score} pts" for idx, (user_id, score) in enumerate(sorted_scores)]
+    )
+    await channel.send(leaderboard)
 
-    if current_question_index >= 10:
-        game_active = False
-        await channel.send("🎉 Quiz over!")
-        await show_leaderboard(channel)
-        return
+    quiz_running = False
+    # No auto-restart here
 
-    q = current_round_questions[current_question_index]
-    current_question = q["question"]
-    current_answer = q["answer"].lower()
-    answered_correctly = False
-
-    current_question_index += 1
-    await channel.send(f"❓ Question {current_question_index}:\n**{current_question}**")
-
-    try:
-        await asyncio.sleep(10)  # ⏱️ Wait for answers
-        if not answered_correctly:
-            await channel.send(f"⏰ Time's up! The correct answer was: **{current_answer}**")
-        await asyncio.sleep(6)  # Wait before next question
-        await ask_next_question(channel)
-    except Exception as e:
-        print("Error during question timing:", e)
-
-@bot.command()
-async def leaderboard(ctx):
-    await show_leaderboard(ctx.channel)
-
-async def show_leaderboard(channel):
-    if not players:
-        await channel.send("No scores yet.")
-        return
-
-    sorted_scores = sorted(players.items(), key=lambda x: x[1], reverse=True)
-    leaderboard_text = "\n".join([f"{name}: {score}" for name, score in sorted_scores])
-    await channel.send(f"🏆 Final Leaderboard:\n{leaderboard_text}")
-
-@bot.command()
-async def endquiz(ctx):
-    global game_active
-    if not game_active:
-        await ctx.send("No quiz is running.")
-        return
-
-    game_active = False
-    await ctx.send("🛑 Quiz ended. Starting a new round...!")
-
-@bot.event
-async def on_message(message):
-    global current_question, current_answer, answered_correctly
-
-    await bot.process_commands(message)
-
-    if message.author.bot or not game_active or not current_question:
-        return
-
-    if message.author.id not in joined_players:
-        return
-
-    user_answer = message.content.strip()
-    match_score = fuzz.ratio(user_answer.lower(), current_answer)
-
-    if match_score >= 85 and not answered_correctly:
-        answered_correctly = True
-        player = message.author.name
-        players[player] = players.get(player, 0) + 15  # 10 base + 5 fastest finger
-        await message.channel.send(
-            f"⚡ Fastest Finger! ✅ Correct, {player}! +15 points 🎉 (Total: {players[player]} points)"
+async def wait_for_answers(channel, question):
+    def check(m):
+        return (
+            m.channel.id == channel.id
+            and m.author != bot.user
+            and m.author.id not in answered_users
         )
 
-# Start the bot
-load_dotenv()
-bot.run(os.getenv("DISCORD_TOKEN"))
+    correct_answer = question["answer"].strip().lower()
+    answered_correctly = False
+
+    while True:
+        message = await bot.wait_for("message", check=check)
+
+        user_answer = message.content.strip().lower()
+        user_id = message.author.id
+
+        if not user_id in scores:
+            scores[user_id] = 0
+
+        if user_answer == correct_answer:
+            if not answered_correctly:
+                scores[user_id] += 15  # 10 + 5 bonus for fastest
+                await channel.send(f"✅ {message.author.mention} got it right first! (+15 pts)")
+                answered_correctly = True
+            else:
+                scores[user_id] += 10
+                await channel.send(f"✅ {message.author.mention} also got it right! (+10 pts)")
+
+            await channel.send(f"🏅 Your total: {scores[user_id]} pts")
+            answered_users.add(user_id)
+        else:
+            answered_users.add(user_id)
+
+        # Stop if someone answered correctly
+        if answered_correctly:
+            break
+
+bot.run("YOUR_BOT_TOKEN_HERE")
