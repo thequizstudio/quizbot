@@ -33,18 +33,6 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def on_ready():
     print(f"Quiz bot is online as {bot.user}!")
 
-@bot.event
-async def on_member_join(member):
-    if member.bot:
-        return  # Skip bots
-
-    joined_players.add(member.id)
-
-    # Send welcome message in "general" channel
-    channel = discord.utils.get(member.guild.text_channels, name="general")
-    if channel:
-        await channel.send(f"👋 Welcome {member.name}! You've been auto-enrolled in the quiz.")
-
 @bot.command()
 async def joinquiz(ctx):
     joined_players.add(ctx.author.id)
