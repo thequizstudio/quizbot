@@ -61,37 +61,6 @@ async def startquiz(ctx):
     await ctx.send(f"🧠 Quiz started! First question:\n**{current_question}**")
 
 @bot.command()
-async def answer(ctx, *, user_answer):
-    global current_question, current_answer
-
-    if not game_active:
-        return
-
-    if ctx.author.id not in joined_players:
-        await ctx.send(f"{ctx.author.name}, please join the quiz using `!joinquiz`.")
-        return
-
-    if not current_question:
-        await ctx.send("There's no active question.")
-        return
-
-    # Fuzzy matching (score from 0 to 100)
-    match_score = fuzz.ratio(user_answer.lower().strip(), current_answer)
-    print(f"Answer by {ctx.author.name}: {user_answer} | Score: {match_score}")
-    
-    if match_score >= 85:
-        player = ctx.author.name
-        players[player] = players.get(player, 0) + 1
-        await ctx.send(f"✅ Correct, {player}! 🎉")
-
-        q = random.choice(questions)
-        current_question = q["question"]
-        current_answer = q["answer"].lower()
-        await ctx.send(f"Next question:\n**{current_question}**")
-    else:
-        await ctx.send(f"❌ Not quite right, {ctx.author.name}!")
-
-@bot.command()
 async def leaderboard(ctx):
     if not players:
         await ctx.send("No scores yet.")
@@ -111,6 +80,38 @@ async def endquiz(ctx):
 
     game_active = False
     await ctx.send("🛑 Quiz ended. Thanks for playing!")
+
+@bot.event
+async def on_message(message):
+    global current_question, current_answer
+
+    # Allow commands like !startquiz to still work
+    await bot.process_commands(message)
+
+    if message.author.bot:
+        return
+
+    if not game_active or not current_question:
+        return
+
+    if message.author.id not in joined_players:
+        return
+
+    user_answer = message.content.strip()
+    match_score = fuzz.ratio(user_answer.lower(), current_answer)
+    print(f"Message from {message.author.name}: {user_answer} | Score: {match_score}")
+
+    if match_score >= 85:
+        player = message.author.name
+        players[player] = players.get(player, 0) + 1
+        await message.channel.send(f"✅ Correct, {player}! 🎉")
+
+        q = random.choice(questions)
+        current_question = q["question"]
+        current_answer = q["answer"].lower()
+        await message.channel.send(f"Next question:\n**{current_question}**")
+    else:
+        await message.channel.send(f"❌ Not quite right, {message.author.name}!")
 
 # Load the token and run the bot
 load_dotenv()
