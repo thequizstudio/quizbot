@@ -1,3 +1,7 @@
+@bot.command()
+async def getchannelid(ctx):
+    await ctx.send(f"Channel ID: `{ctx.channel.id}`")
+
 from dotenv import load_dotenv
 import os
 import discord
