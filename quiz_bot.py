@@ -24,11 +24,6 @@ current_round_questions = []
 current_question_index = 0
 answered_correctly = False
 
-intents = discord.Intents.default()
-intents.message_content = True
-intents.members = True  # ✅ Needed for auto-enrolment
-bot = commands.Bot(command_prefix="!", intents=intents)
-
 @bot.event
 async def on_ready():
     print(f"Quiz bot is online as {bot.user}!")
