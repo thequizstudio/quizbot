@@ -75,8 +75,10 @@ async def ask_next_question(channel):
         await show_leaderboard(channel)
         
         # Start a new game after 30 seconds
-        await asyncio.sleep(30)  # Wait for 30 seconds before starting a new game
-        await channel.send("⏳ Starting a new game soon! Join using `!joinquiz`.")
+        await asyncio.sleep(30)  # Wait for 30 seconds
+        await channel.send("⏳ Starting a new game soon! Current players can join!")
+        
+        players.clear() # Clear scores to start fresh
         await startquiz(channel)  # Start a new game in the same channel
         return
 
@@ -122,7 +124,7 @@ async def endquiz(ctx):
 
     # Start a countdown before the next game
     await asyncio.sleep(30)  # Wait for 30 seconds
-    await ctx.send("⏳ Starting a new game soon! Join using `!joinquiz`.")
+    await ctx.send("⏳ Starting a new game soon! Current players can join!")
     await startquiz(ctx)  # Automatically start a new game
 
 @bot.event
