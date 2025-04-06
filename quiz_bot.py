@@ -64,34 +64,38 @@ async def startquiz(ctx):
 
     await ctx.send(f"🧠 Quiz started! First question:\n**{current_question}**")
 
-@bot.command()
-async def answer(ctx, *, user_answer):
+@bot.event
+async def on_message(message):
     global current_question, current_answer
 
-    if ctx.channel.id != CHANNEL_ID or not game_active:
+    # Don't let the bot respond to its own messages
+    if message.author == bot.user:
         return
 
-    if ctx.author.id not in joined_players:
-        await ctx.send(f"{ctx.author.name}, please join the quiz using `!joinquiz`.")
+    # Ignore messages from outside the quiz channel or when the game is inactive
+    if message.channel.id != CHANNEL_ID or not game_active:
         return
 
-    if not current_question:
-        await ctx.send("There's no active question.")
+    # Check if the user is in the quiz
+    if message.author.id not in joined_players:
         return
 
-    # Fuzzy matching (score from 0 to 100)
-    match_score = fuzz.ratio(user_answer.lower().strip(), current_answer)
-    if match_score >= 85:
-        player = ctx.author.name
+    # Check if the message matches the current question answer
+    if current_question and fuzz.ratio(message.content.lower().strip(), current_answer) >= 85:
+        player = message.author.name
         players[player] = players.get(player, 0) + 1
-        await ctx.send(f"✅ Correct, {player}! 🎉")
+        await message.channel.send(f"✅ Correct, {player}! 🎉")
 
+        # Get the next question
         q = random.choice(questions)
         current_question = q["question"]
         current_answer = q["answer"].lower()
-        await ctx.send(f"Next question:\n**{current_question}**")
+        await message.channel.send(f"Next question:\n**{current_question}**")
+
     else:
-        await ctx.send(f"❌ Not quite right, {ctx.author.name}!")
+        await message.channel.send(f"❌ Not quite right, {message.author.name}!")
+
+    await bot.process_commands(message)
 
 @bot.command()
 async def leaderboard(ctx):
@@ -122,4 +126,3 @@ async def endquiz(ctx):
 # Run your bot
 load_dotenv()
 bot.run(os.getenv("DISCORD_TOKEN"))
-
