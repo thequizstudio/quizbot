@@ -6,11 +6,11 @@ import json
 import random
 from rapidfuzz import fuzz
 
-CHANNEL_ID = 1358391826716950622  # Replace with your actual channel ID
-
 def load_questions():
     with open("questions.json", "r") as f:
-        return json.load(f)
+        data = json.load(f)
+        print(f"Loaded {len(data)} questions.")
+        return data
 
 questions = load_questions()
 current_question = None
@@ -29,23 +29,19 @@ async def on_ready():
 
 @bot.command()
 async def joinquiz(ctx):
-    if ctx.channel.id != CHANNEL_ID:
-        return
     joined_players.add(ctx.author.id)
     await ctx.send(f"{ctx.author.name} has joined the quiz!")
 
 @bot.command()
 async def leavequiz(ctx):
-    if ctx.channel.id != CHANNEL_ID:
-        return
     joined_players.discard(ctx.author.id)
     await ctx.send(f"{ctx.author.name} has left the quiz.")
 
 @bot.command()
 async def startquiz(ctx):
     global game_active, current_question, current_answer
-    if ctx.channel.id != CHANNEL_ID:
-        return
+
+    print("!startquiz command received")
 
     if game_active:
         await ctx.send("A quiz is already running!")
@@ -64,44 +60,39 @@ async def startquiz(ctx):
 
     await ctx.send(f"🧠 Quiz started! First question:\n**{current_question}**")
 
-@bot.event
-async def on_message(message):
+@bot.command()
+async def answer(ctx, *, user_answer):
     global current_question, current_answer
 
-    # Don't let the bot respond to its own messages
-    if message.author == bot.user:
+    if not game_active:
         return
 
-    # Ignore messages from outside the quiz channel or when the game is inactive
-    if message.channel.id != CHANNEL_ID or not game_active:
+    if ctx.author.id not in joined_players:
+        await ctx.send(f"{ctx.author.name}, please join the quiz using `!joinquiz`.")
         return
 
-    # Check if the user is in the quiz
-    if message.author.id not in joined_players:
+    if not current_question:
+        await ctx.send("There's no active question.")
         return
 
-    # Check if the message matches the current question answer
-    if current_question and fuzz.ratio(message.content.lower().strip(), current_answer) >= 85:
-        player = message.author.name
+    # Fuzzy matching (score from 0 to 100)
+    match_score = fuzz.ratio(user_answer.lower().strip(), current_answer)
+    print(f"Answer by {ctx.author.name}: {user_answer} | Score: {match_score}")
+    
+    if match_score >= 85:
+        player = ctx.author.name
         players[player] = players.get(player, 0) + 1
-        await message.channel.send(f"✅ Correct, {player}! 🎉")
+        await ctx.send(f"✅ Correct, {player}! 🎉")
 
-        # Get the next question
         q = random.choice(questions)
         current_question = q["question"]
         current_answer = q["answer"].lower()
-        await message.channel.send(f"Next question:\n**{current_question}**")
-
+        await ctx.send(f"Next question:\n**{current_question}**")
     else:
-        await message.channel.send(f"❌ Not quite right, {message.author.name}!")
-
-    await bot.process_commands(message)
+        await ctx.send(f"❌ Not quite right, {ctx.author.name}!")
 
 @bot.command()
 async def leaderboard(ctx):
-    if ctx.channel.id != CHANNEL_ID:
-        return
-
     if not players:
         await ctx.send("No scores yet.")
         return
@@ -111,14 +102,8 @@ async def leaderboard(ctx):
     await ctx.send(f"🏆 Leaderboard:\n{leaderboard_text}")
 
 @bot.command()
-async def getchannelid(ctx):
-    await ctx.send(f"Channel ID: `{ctx.channel.id}`")
-
-@bot.command()
 async def endquiz(ctx):
     global game_active
-    if ctx.channel.id != CHANNEL_ID:
-        return
 
     if not game_active:
         await ctx.send("No quiz is running.")
@@ -127,6 +112,6 @@ async def endquiz(ctx):
     game_active = False
     await ctx.send("🛑 Quiz ended. Thanks for playing!")
 
-# Run your bot
+# Load the token and run the bot
 load_dotenv()
 bot.run(os.getenv("DISCORD_TOKEN"))
