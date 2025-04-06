@@ -26,6 +26,7 @@ answered_this_round = set()
 quiz_channel_id = None  # Store the ID of the channel where the quiz is running
 NUMBER_OF_QUESTIONS_PER_ROUND = 5  # Adjust as needed
 DELAY_BETWEEN_ROUNDS = 15  # Seconds
+accepting_answers = False  # New global flag
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -55,7 +56,7 @@ async def on_ready():
         print("Error: Bot is not in any guilds.")
 
 async def start_new_round(guild):
-    global game_active, current_question, current_answer, current_round_questions, current_question_index, players, answered_this_round
+    global game_active, current_question, current_answer, current_round_questions, current_question_index, players, answered_this_round, accepting_answers
 
     if game_active:
         print("A quiz is already running, but a new round was triggered.")
@@ -66,6 +67,7 @@ async def start_new_round(guild):
     answered_this_round.clear()
     current_question_index = 0
     current_round_questions = random.sample(questions, min(NUMBER_OF_QUESTIONS_PER_ROUND, len(questions)))
+    accepting_answers = False # Initialize to False at the start of a round
 
     # Automatically enroll all non-bot members present at the start
     for member in guild.members:
@@ -85,7 +87,7 @@ async def start_new_round(guild):
         game_active = False
 
 async def ask_next_question(channel):
-    global current_question, current_answer, current_question_index, answered_correctly, game_active, answered_this_round
+    global current_question, current_answer, current_question_index, answered_correctly, game_active, answered_this_round, accepting_answers
 
     if not game_active:
         return
@@ -104,8 +106,9 @@ async def ask_next_question(channel):
     q = current_round_questions[current_question_index]
     current_question = q["question"]
     current_answer = q["answer"].lower()
-    answered_correctly = False  # Reset the flag for the new question
-    answered_this_round = set() # Reset for the new question
+    answered_correctly = False
+    answered_this_round = set()
+    accepting_answers = True  # Start accepting answers for the new question
 
     current_question_index += 1
     # Added permission check for debugging
@@ -117,10 +120,11 @@ async def ask_next_question(channel):
 
     try:
         await asyncio.sleep(10)  # Wait for answers
+        accepting_answers = False # Stop accepting answers after time is up
         if not answered_correctly:
             await channel.send(f"⏰ Time's up! The correct answer was: **{current_answer}**")
         await asyncio.sleep(5)  # Short delay before the next question
-        if game_active: # Check if the game is still active before asking the next question
+        if game_active:
             await ask_next_question(channel)
     except Exception as e:
         print("Error during question timing:", e)
@@ -150,11 +154,11 @@ async def endquiz(ctx):
 
 @bot.event
 async def on_message(message):
-    global current_question, current_answer, answered_correctly, game_active, answered_this_round
+    global current_question, current_answer, answered_correctly, game_active, answered_this_round, accepting_answers
 
     await bot.process_commands(message)
 
-    if message.author.bot or not game_active or not current_question or message.channel.id != quiz_channel_id:
+    if message.author.bot or not game_active or not current_question or message.channel.id != quiz_channel_id or not accepting_answers:
         return
 
     user_answer = message.content.strip()
@@ -164,13 +168,12 @@ async def on_message(message):
         answered_correctly = True
         answered_this_round.add(message.author.id)
         player = message.author.name
-        players[player] = players.get(player, 0) + 15  # 10 base + 5 fastest finger
+        players[player] = players.get(player, 0) + 15
         await message.channel.send(
             f"⚡ Fastest Finger! ✅ Correct, {player}! +15 points 🎉 (Total: {players[player]} points)"
         )
-        return # Important: Exit after a correct answer
+        return
 
-    # If the user is not yet in the players list, add them (for potential future correct answers in the same round)
     if game_active and message.author.name not in players and not message.author.bot:
         players[message.author.name] = players.get(message.author.name, 0)
 
