@@ -67,7 +67,7 @@ async def ask_next_question(channel):
 
     if current_question_index >= 10:
         game_active = False
-        await channel.send("🎉 Quiz over!")
+        await channel.send("🎉 Round over!")
         await show_leaderboard(channel)
         return
 
