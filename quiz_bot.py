@@ -80,10 +80,10 @@ async def ask_next_question(channel):
     await channel.send(f"❓ Question {current_question_index}:\n**{current_question}**")
 
     try:
-        await asyncio.sleep(6)  # Wait for answers
+        await asyncio.sleep(10)  # Wait for answers
         if not answered_correctly:
             await channel.send(f"⏰ Time's up! The correct answer was: **{current_answer}**")
-        await asyncio.sleep(6)  # Wait before next question
+        await asyncio.sleep(10)  # Wait before next question
         await ask_next_question(channel)
     except Exception as e:
         print("Error during question timing:", e)
