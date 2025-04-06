@@ -4,8 +4,10 @@ import discord
 from discord.ext import commands
 import json
 import random
+import asyncio
 from rapidfuzz import fuzz
 
+# Load questions from JSON
 def load_questions():
     with open("questions.json", "r") as f:
         data = json.load(f)
@@ -18,6 +20,9 @@ current_answer = None
 players = {}
 joined_players = set()
 game_active = False
+current_round_questions = []
+current_question_index = 0
+answered_correctly = False
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -39,9 +44,7 @@ async def leavequiz(ctx):
 
 @bot.command()
 async def startquiz(ctx):
-    global game_active, current_question, current_answer
-
-    print("!startquiz command received")
+    global game_active, current_question, current_answer, current_round_questions, current_question_index
 
     if game_active:
         await ctx.send("A quiz is already running!")
@@ -53,27 +56,54 @@ async def startquiz(ctx):
 
     game_active = True
     players.clear()
+    current_question_index = 0
+    current_round_questions = random.sample(questions, 10)
 
-    q = random.choice(questions)
+    await ctx.send("🧠 Quiz started! 10 questions coming up!")
+    await ask_next_question(ctx.channel)
+
+async def ask_next_question(channel):
+    global current_question, current_answer, current_question_index, answered_correctly, game_active
+
+    if current_question_index >= 10:
+        game_active = False
+        await channel.send("🎉 Quiz over!")
+        await show_leaderboard(channel)
+        return
+
+    q = current_round_questions[current_question_index]
     current_question = q["question"]
     current_answer = q["answer"].lower()
+    answered_correctly = False
 
-    await ctx.send(f"🧠 Quiz started! First question:\n**{current_question}**")
+    current_question_index += 1
+    await channel.send(f"❓ Question {current_question_index}:\n**{current_question}**")
+
+    try:
+        await asyncio.sleep(6)  # Wait for answers
+        if not answered_correctly:
+            await channel.send(f"⏰ Time's up! The correct answer was: **{current_answer}**")
+        await asyncio.sleep(6)  # Wait before next question
+        await ask_next_question(channel)
+    except Exception as e:
+        print("Error during question timing:", e)
 
 @bot.command()
 async def leaderboard(ctx):
+    await show_leaderboard(ctx.channel)
+
+async def show_leaderboard(channel):
     if not players:
-        await ctx.send("No scores yet.")
+        await channel.send("No scores yet.")
         return
 
     sorted_scores = sorted(players.items(), key=lambda x: x[1], reverse=True)
     leaderboard_text = "\n".join([f"{name}: {score}" for name, score in sorted_scores])
-    await ctx.send(f"🏆 Leaderboard:\n{leaderboard_text}")
+    await channel.send(f"🏆 Final Leaderboard:\n{leaderboard_text}")
 
 @bot.command()
 async def endquiz(ctx):
     global game_active
-
     if not game_active:
         await ctx.send("No quiz is running.")
         return
@@ -83,15 +113,11 @@ async def endquiz(ctx):
 
 @bot.event
 async def on_message(message):
-    global current_question, current_answer
+    global current_question, current_answer, answered_correctly
 
-    # Allow commands like !startquiz to still work
     await bot.process_commands(message)
 
-    if message.author.bot:
-        return
-
-    if not game_active or not current_question:
+    if message.author.bot or not game_active or not current_question:
         return
 
     if message.author.id not in joined_players:
@@ -99,20 +125,15 @@ async def on_message(message):
 
     user_answer = message.content.strip()
     match_score = fuzz.ratio(user_answer.lower(), current_answer)
-    print(f"Message from {message.author.name}: {user_answer} | Score: {match_score}")
 
-    if match_score >= 85:
+    if match_score >= 85 and not answered_correctly:
+        answered_correctly = True
         player = message.author.name
-        players[player] = players.get(player, 0) + 1
-        await message.channel.send(f"✅ Correct, {player}! 🎉")
+        players[player] = players.get(player, 0) + 15  # 10 base + 5 fastest finger
+        await message.channel.send(
+            f"⚡ Fastest Finger! ✅ Correct, {player}! +15 points 🎉 (Total: {players[player]} points)"
+        )
 
-        q = random.choice(questions)
-        current_question = q["question"]
-        current_answer = q["answer"].lower()
-        await message.channel.send(f"Next question:\n**{current_question}**")
-    else:
-        await message.channel.send(f"❌ Not quite right, {message.author.name}!")
-
-# Load the token and run the bot
+# Start the bot
 load_dotenv()
 bot.run(os.getenv("DISCORD_TOKEN"))
