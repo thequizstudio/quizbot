@@ -29,7 +29,7 @@
     { "question": "CHEMISTRY 🧫: What is the pH of pure water?", "answer": "7" },
     { "question": "SPORTS ⚽: What country hosted the 2008 Summer Olympics?", "answer": "China" },
     { "question": "SPACE 🌌: Which planet has the most moons?", "answer": "Jupiter" },
-    { "question": "GEOGRAPHY 🌐: What is the largest island in the world?", "answer": "Greenland" }
+    { "question": "GEOGRAPHY 🌐: What is the largest island in the world?", "answer": "Greenland" },
     { "question": "HISTORY 🏛️: Who was the first man to walk on the moon?", "answer": "Armstrong" },
     { "question": "MUSIC 🎶: What was Elvis Presley’s middle name?", "answer": "Aaron" },
     { "question": "LITERATURE 📚: Who wrote the novel'Moby-Dick'?", "answer": "Melville" },
@@ -46,7 +46,7 @@
     { "question": "HISTORY 📜: Who was the last pharaoh of Egypt?", "answer": "Cleopatra" },
     { "question": "BIOLOGY 🧬: What is the process by which plants make food?", "answer": "Photosynthesis" },
     { "question": "GEOGRAPHY 🌏: What country has the most islands?", "answer": "Sweden" },
-    { "question": "MYTHOLOGY 🏛️: What was the Roman name for the Greek goddess Hera?", "answer": "Juno" }
+    { "question": "MYTHOLOGY 🏛️: What was the Roman name for the Greek goddess Hera?", "answer": "Juno" },
     { "question": "CINEMA 🎬: In which movie is the fictional planet Pandora?", "answer": "Avatar" },
     { "question": "GEOGRAPHY 🌍: Which country has the most volcanoes?", "answer": "Indonesia" },
     { "question": "SPACE 🌌: What is the largest moon of Saturn?", "answer": "Titan" },
@@ -81,7 +81,7 @@
     { "question": "GEOGRAPHY 🌐: Which country has the most time zones?", "answer": "France" },
     { "question": "HISTORY 🏛️: Which country was once known as Ceylon?", "answer": "Sri Lanka" },
     { "question": "MUSIC 🎶: Which composer wrote the famous 'The Four Seasons'?", "answer": "Vivaldi" },
-    { "question": "HISTORY 🏺: Who was the famous English explorer who first sailed around the world?", "answer": "Magellan" }
+    { "question": "HISTORY 🏺: Who was the famous English explorer who first sailed around the world?", "answer": "Magellan" },
     { "question": "HISTORY 🏛️: What is the oldest active language still spoken?", "answer": "Tamil" },
     { "question": "GEOGRAPHY 🌍: What is the only flag that does not have four sides?", "answer": "Nepal" },
     { "question": "HISTORY 🏛️: Which empire built the Great Wall of China?", "answer": "Qin" }
