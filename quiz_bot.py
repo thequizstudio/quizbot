@@ -31,6 +31,25 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+@bot.event
+async def on_ready():
+    print("on_ready event triggered!")
+    if bot.guilds:
+        guild = bot.guilds[0]
+        print(f"Number of guilds connected: {len(bot.guilds)}")
+        print(f"First guild: {guild.name} ({guild.id})")
+        for channel in guild.text_channels:
+            print(f"Checking channel: {channel.name} ({channel.id}) - Permissions: Send Messages={channel.permissions_for(guild.me).send_messages}, Read Messages={channel.permissions_for(guild.me).read_messages}")
+            if channel.permissions_for(guild.me).send_messages and channel.permissions_for(guild.me).read_messages:
+                global quiz_channel_id
+                quiz_channel_id = channel.id
+                print(f"Quiz will run in channel: {channel.name} ({channel.id})")
+                await start_new_round(guild)
+                return
+        print("Error: Could not find a suitable channel to run the quiz in.")
+    else:
+        print("Error: Bot is not in any guilds.")
+
 async def start_new_round(guild):
     global game_active, current_question, current_answer, current_round_questions, current_question_index, players, answered_this_round
 
@@ -97,23 +116,6 @@ async def ask_next_question(channel):
             await ask_next_question(channel)
     except Exception as e:
         print("Error during question timing:", e)
-
-@bot.event
-async def on_ready():
-    print(f"Quiz bot is online as {bot.user}!")
-    # Find the first text channel in the first guild the bot is in
-    if bot.guilds:
-        guild = bot.guilds[0]
-        for channel in guild.text_channels:
-            if channel.permissions_for(guild.me).send_messages and channel.permissions_for(guild.me).read_messages:
-                global quiz_channel_id
-                quiz_channel_id = channel.id
-                print(f"Quiz will run in channel: {channel.name} ({channel.id})")
-                await start_new_round(guild)
-                return
-        print("Error: Could not find a suitable channel to run the quiz in.")
-    else:
-        print("Error: Bot is not in any guilds.")
 
 @bot.command()
 async def leaderboard(ctx):
