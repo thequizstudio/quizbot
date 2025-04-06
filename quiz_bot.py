@@ -6,6 +6,7 @@ import json
 import random
 import asyncio
 from rapidfuzz import fuzz
+import time  # Import time for tracking response time
 
 # Load questions from JSON
 def load_questions():
@@ -27,6 +28,9 @@ answered_correctly = False
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
+
+time_limit = 10  # Time limit in seconds for answering each question.
+question_start_time = None  # To track when the question was asked.
 
 @bot.event
 async def on_ready():
@@ -63,7 +67,7 @@ async def startquiz(ctx):
     await ask_next_question(ctx.channel)
 
 async def ask_next_question(channel):
-    global current_question, current_answer, current_question_index, answered_correctly, game_active
+    global current_question, current_answer, current_question_index, answered_correctly, game_active, question_start_time
 
     if current_question_index >= 10:
         game_active = False
@@ -77,16 +81,16 @@ async def ask_next_question(channel):
     answered_correctly = False
 
     current_question_index += 1
+    
+    # Track the time when the question is asked
+    question_start_time = time.time()
     await channel.send(f"❓ Question {current_question_index}:\n**{current_question}**")
 
-    try:
-        await asyncio.sleep(10)  # Wait for answers
-        if not answered_correctly:
-            await channel.send(f"⏰ Time's up! The correct answer was: **{current_answer}**")
-        await asyncio.sleep(8)  # Wait before next question
-        await ask_next_question(channel)
-    except Exception as e:
-        print("Error during question timing:", e)
+    await asyncio.sleep(time_limit)  # Wait for answers
+    if not answered_correctly:
+        await channel.send(f"⏰ Time's up! The correct answer was: **{current_answer}**")
+    await asyncio.sleep(8)  # Wait before the next question
+    await ask_next_question(channel)
 
 @bot.command()
 async def leaderboard(ctx):
@@ -113,7 +117,7 @@ async def endquiz(ctx):
 
 @bot.event
 async def on_message(message):
-    global current_question, current_answer, answered_correctly
+    global current_question, current_answer, answered_correctly, question_start_time
 
     await bot.process_commands(message)
 
@@ -129,9 +133,17 @@ async def on_message(message):
     if match_score >= 85 and not answered_correctly:
         answered_correctly = True
         player = message.author.name
-        players[player] = players.get(player, 0) + 15  # 10 base + 5 fastest finger
+
+        # Calculate the time taken to answer
+        time_taken = time.time() - question_start_time  # Get the time since the question was asked
+        time_taken = min(time_taken, time_limit)  # Ensure max time taken does not exceed the limit
+
+        # Determine points based on time taken
+        points = max(0, 15 - int(time_taken))  # Subtract points based on time taken, down to 0 points
+        players[player] = players.get(player, 0) + points  # Update player score
+
         await message.channel.send(
-            f"⚡ Fastest Finger! ✅ Correct, {player}! +15 points 🎉 (Total: {players[player]} points)"
+            f"⚡ Fastest Finger! ✅ Correct, {player}! +{points} points 🎉 (Total: {players[player]} points)"
         )
 
 # Start the bot
