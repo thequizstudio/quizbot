@@ -67,7 +67,7 @@ async def start_new_round(guild):
     current_question_index = 0
     current_round_questions = random.sample(questions, min(NUMBER_OF_QUESTIONS_PER_ROUND, len(questions)))
 
-    # Automatically enroll all non-bot members
+    # Automatically enroll all non-bot members present at the start
     for member in guild.members:
         if not member.bot:
             players[member.name] = 0
@@ -153,13 +153,10 @@ async def on_message(message):
     if message.author.bot or not game_active or not current_question or message.channel.id != quiz_channel_id:
         return
 
-    if message.author.name not in players or message.author.id in answered_this_round:
-        return
-
     user_answer = message.content.strip()
     match_score = fuzz.ratio(user_answer.lower(), current_answer)
 
-    if match_score >= 85 and not answered_correctly:
+    if match_score >= 85 and not answered_correctly and message.author.id not in answered_this_round:
         answered_correctly = True
         answered_this_round.add(message.author.id)
         player = message.author.name
@@ -167,6 +164,11 @@ async def on_message(message):
         await message.channel.send(
             f"⚡ Fastest Finger! ✅ Correct, {player}! +15 points 🎉 (Total: {players[player]} points)"
         )
+        return # Important: Exit after a correct answer
+
+    # If the user is not yet in the players list, add them (for potential future correct answers in the same round)
+    if game_active and message.author.name not in players and not message.author.bot:
+        players[message.author.name] = players.get(message.author.name, 0)
 
 # Start the bot
 load_dotenv()
