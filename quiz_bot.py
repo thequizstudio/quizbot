@@ -25,7 +25,7 @@ answered_correctly = False
 answered_this_round = set()
 quiz_channel_id = None  # Store the ID of the channel where the quiz is running
 NUMBER_OF_QUESTIONS_PER_ROUND = 5  # Adjust as needed
-DELAY_BETWEEN_ROUNDS = 15  # Seconds
+DELAY_BETWEEN_ROUNDS = 30  # Seconds
 accepting_answers = False  # New global flag
 
 intents = discord.Intents.default()
@@ -123,7 +123,7 @@ async def ask_next_question(channel):
         accepting_answers = False # Stop accepting answers after time is up
         if not answered_correctly:
             await channel.send(f"⏰ Time's up! The correct answer was: **{current_answer}**")
-        await asyncio.sleep(5)  # Short delay before the next question
+        await asyncio.sleep(7)  # Short delay before the next question
         if game_active:
             await ask_next_question(channel)
     except Exception as e:
@@ -135,7 +135,7 @@ async def leaderboard(ctx):
 
 async def show_leaderboard(channel):
     if not players:
-        await channel.send("No scores yet.")
+        await channel.send("Nobody scored anything! 💀")
         return
 
     sorted_scores = sorted(players.items(), key=lambda x: x[1], reverse=True)
