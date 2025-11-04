@@ -27,8 +27,8 @@ current_question_index = 0
 answered_correctly = False
 answered_this_round = set()
 quiz_channel_id = None  # Store the ID of the channel where the quiz is running
-NUMBER_OF_QUESTIONS_PER_ROUND = 10  # Adjust as needed
-DELAY_BETWEEN_ROUNDS = 30  # Seconds
+NUMBER_OF_QUESTIONS_PER_ROUND = 3  # Adjust as needed
+DELAY_BETWEEN_ROUNDS = 10  # Seconds
 accepting_answers = False  # New global flag
 
 intents = discord.Intents.default()
