@@ -205,7 +205,7 @@ async def on_message(message):
     if match_score >= 85 and not answered_correctly and message.author.id not in answered_this_round:
         answered_correctly = True
         answered_this_round.add(message.author.id)
-        player = message.author.name
+        player = message.author.display_name
         players[player] = players.get(player, 0) + 15
         await message.channel.send(
             f"⚡ Fastest Finger! ✅ Correct, {player}! +15 points 🎉 (Total this round: {players[player]} points)"
