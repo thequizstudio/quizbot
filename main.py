@@ -18,12 +18,12 @@ def load_questions():
 questions = load_questions()
 
 current_question = None
-current_answer.title() = None
+current_answer = None  # fix: no .title() here
 players = {}  # current round scores
 game_active = False
 current_round_questions = []
 current_question_index = 0
-answered_correctly = []  # Now a list of tuples: [(player, points), ...]
+answered_correctly = []  # list of (player, points)
 answered_this_round = set()
 quiz_channel_id = None
 NUMBER_OF_QUESTIONS_PER_ROUND = 3
@@ -107,7 +107,7 @@ async def start_new_round(guild):
         game_active = False
 
 async def ask_next_question(channel):
-    global current_question, current_answer.title(), current_question_index, answered_correctly, game_active, answered_this_round, accepting_answers
+    global current_question, current_answer, current_question_index, answered_correctly, game_active, answered_this_round, accepting_answers
 
     if not game_active:
         return
@@ -129,7 +129,7 @@ async def ask_next_question(channel):
 
     q = current_round_questions[current_question_index]
     current_question = q["question"]
-    current_answer.title() = q["answer"].lower()
+    current_answer = q["answer"].lower()  # Store answer lowercase for matching
     answered_correctly = []
     answered_this_round = set()
     accepting_answers = True
@@ -139,7 +139,7 @@ async def ask_next_question(channel):
     perms = channel.permissions_for(channel.guild.me)
     print(f"Permissions in #{channel.name}: send_messages={perms.send_messages}, view_channel={perms.view_channel}")
 
-    await channel.send(f"Question {current_question_index}:\n**{current_question}**")
+    await channel.send(f"❓ Question {current_question_index}:\n**{current_question}**")
 
     try:
         await asyncio.sleep(10)
@@ -198,7 +198,7 @@ async def endquiz(ctx):
 
 @bot.event
 async def on_message(message):
-    global current_question, current_answer.title(), answered_correctly, game_active, answered_this_round, accepting_answers
+    global current_question, current_answer, answered_correctly, game_active, answered_this_round, accepting_answers
 
     await bot.process_commands(message)
 
@@ -212,7 +212,7 @@ async def on_message(message):
         return
 
     user_answer = message.content.strip()
-    match_score = fuzz.ratio(user_answer.lower(), current_answer.title())
+    match_score = fuzz.ratio(user_answer.lower(), current_answer)
 
     if (
         match_score >= 85
