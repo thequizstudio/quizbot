@@ -121,4 +121,8 @@
     { "question": "MUSIC 🎶<br> What was the title of Ariana Grande’s 2020 album?", "answer": "Positions" },
     { "question": "TV SHOWS 📺<br> What Netflix series features a character called 'Joe Goldberg'?", "answer": "You" },
     { "question": "MUSIC 🎶<br> Which artist had a hit in 2019 with 'Truth Hurts'?", "answer": "Lizzo" },
-    { "question": "TV SHOWS 📺<br> What 2020 Disney+ series focuses on the character 'Wanda Maximoff'?", "answer": "Wanda
+    { "question": "TV SHOWS 📺<br> What 2020 Disney+ series focuses on the character 'Wanda Maximoff'?", "answer": "WandaVision" },
+    { "question": "MUSIC 🎶<br> Who won the 2021 Grammy for Album of the Year?", "answer": "Taylor Swift" },
+    { "question": "MUSIC 🎶<br> What is the stage name of the artist born Stefani Germanotta?", "answer": "Lady Gaga" },
+    { "question": "SCIENCE 🔬<br> What is the powerhouse of the cell?", "answer": "Mitochondria" }
+]
