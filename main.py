@@ -64,6 +64,26 @@ async def send_embed(channel, message, title=None, color=0x3498db):
         embed.title = title
     await channel.send(embed=embed)
 
+def get_round_categories(questions_for_round):
+    categories = set()
+    for q in questions_for_round:
+        question_text = q.get("question", "")
+        first_line = question_text.split('\n')[0].strip()
+        category = first_line.split(' ')[0].strip().upper()
+        if category:
+            categories.add(category)
+    return sorted(categories)
+
+def clean_question_text(question_text):
+    # Remove category and emoji prefix, assume format "CATEGORY EMOJI\n\n Actual question?"
+    parts = question_text.split('\n', 2)
+    if len(parts) >= 3:
+        return parts[2].strip()
+    elif len(parts) == 2:
+        return parts[1].strip()
+    else:
+        return question_text.strip()
+
 @bot.event
 async def on_ready():
     print(f"Bot connected as {bot.user}!")
@@ -106,6 +126,11 @@ async def start_new_round(guild):
 
     channel = bot.get_channel(quiz_channel_id)
     if channel:
+        categories = get_round_categories(current_round_questions)
+        if categories:
+            categories_preview = "Next up: " + ", ".join(categories) + "."
+            await send_embed(channel, categories_preview, title="🎯 Categories Preview")
+
         await send_embed(channel, f"New quiz round starting! {len(current_round_questions)} questions ahead! 🎉", title="🎲 Quiz Starting")
         await ask_next_question(channel)
     else:
@@ -143,7 +168,8 @@ async def ask_next_question(channel):
         return
 
     q = current_round_questions[current_question_index]
-    current_question = q["question"]
+    raw_question_text = q["question"]
+    current_question = clean_question_text(raw_question_text)
     current_answer = q["answer"].lower()
     answered_correctly = []
     answered_this_round = set()
