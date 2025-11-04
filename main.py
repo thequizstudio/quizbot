@@ -27,7 +27,7 @@ answered_correctly = []  # list of (player, points)
 answered_this_round = set()
 quiz_channel_id = None
 NUMBER_OF_QUESTIONS_PER_ROUND = 3
-DELAY_BETWEEN_ROUNDS = 20
+DELAY_BETWEEN_ROUNDS = 30
 accepting_answers = False
 
 intents = discord.Intents.default()
@@ -114,7 +114,14 @@ async def ask_next_question(channel):
 
     if current_question_index >= len(current_round_questions):
         game_active = False
-        await channel.send("🏁 Round over!")
+
+        # Find the winner for the round
+        if players:
+            winner = max(players.items(), key=lambda x: x[1])[0]
+            await channel.send(f"🏁 Round Over! And the winner is **{winner}** 🎉")
+        else:
+            await channel.send("🏁 Round Over! No winners this round.")
+
         print("Round over, showing leaderboard...")
         await show_leaderboard(channel, round_over=True)
         await channel.send(f"Next round starting in {DELAY_BETWEEN_ROUNDS} seconds... Get ready!")
