@@ -27,7 +27,7 @@ answered_correctly = []  # list of (player, points)
 answered_this_round = set()
 quiz_channel_id = None
 NUMBER_OF_QUESTIONS_PER_ROUND = 3
-DELAY_BETWEEN_ROUNDS = 30
+DELAY_BETWEEN_ROUNDS = 20
 accepting_answers = False
 
 intents = discord.Intents.default()
