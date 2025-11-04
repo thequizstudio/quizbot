@@ -27,7 +27,7 @@ current_question_index = 0
 answered_correctly = False
 answered_this_round = set()
 quiz_channel_id = None  # Store the ID of the channel where the quiz is running
-NUMBER_OF_QUESTIONS_PER_ROUND = 3  # Adjust as needed
+NUMBER_OF_QUESTIONS_PER_ROUND = 10  # Adjust as needed
 DELAY_BETWEEN_ROUNDS = 30  # Seconds
 accepting_answers = False  # New global flag
 
@@ -136,7 +136,10 @@ async def ask_next_question(channel):
         return
 
     if current_question_index >= len(current_round_questions):
-        # Round over
+        # Round is over - immediately mark game as inactive
+        global game_active
+        game_active = False
+
         await channel.send("🏁 Round over!")
         print("Round over: showing leaderboard now...")
         await show_leaderboard(channel, round_over=True)
