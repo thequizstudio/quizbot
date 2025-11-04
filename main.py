@@ -6,6 +6,9 @@ import json
 import random
 import asyncio
 from rapidfuzz import fuzz
+from datetime import datetime
+
+LEADERBOARD_FILE = "leaderboard.json"
 
 # Load questions from JSON
 def load_questions():
@@ -17,7 +20,7 @@ def load_questions():
 questions = load_questions()
 current_question = None
 current_answer = None
-players = {}
+players = {}  # Current round points, reset each round
 game_active = False
 current_round_questions = []
 current_question_index = 0
@@ -31,6 +34,25 @@ accepting_answers = False  # New global flag
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
+
+# --- Helper functions to manage persistent leaderboard ---
+
+def load_leaderboard():
+    if os.path.exists(LEADERBOARD_FILE):
+        with open(LEADERBOARD_FILE, "r") as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return {}
+    return {}
+
+def save_leaderboard(data):
+    with open(LEADERBOARD_FILE, "w") as f:
+        json.dump(data, f, indent=2)
+
+leaderboard = load_leaderboard()  # Persistent total wins/scores
+
+# --- Bot events and commands ---
 
 @bot.event
 async def on_ready():
@@ -95,7 +117,8 @@ async def ask_next_question(channel):
     if current_question_index >= len(current_round_questions):
         game_active = False
         await channel.send("🏁 Round over!")
-        await show_leaderboard(channel)
+        await show_leaderboard(channel, round_over=True)
+        await channel.send(f"Next round starting in {DELAY_BETWEEN_ROUNDS} seconds... Get ready!")
         await asyncio.sleep(DELAY_BETWEEN_ROUNDS)
         for guild in bot.guilds:
             if guild.get_channel(channel.id):
@@ -129,18 +152,31 @@ async def ask_next_question(channel):
     except Exception as e:
         print("Error during question timing:", e)
 
+async def show_leaderboard(channel, round_over=False):
+    global leaderboard
+
+    if round_over:
+        # Add current round points to persistent leaderboard
+        for player, score in players.items():
+            leaderboard[player] = leaderboard.get(player, 0) + score
+        save_leaderboard(leaderboard)
+
+    if not leaderboard:
+        await channel.send("Nobody scored anything so far! 💀")
+        return
+
+    sorted_scores = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True)
+    leaderboard_lines = []
+    for i, (name, score) in enumerate(sorted_scores, start=1):
+        leaderboard_lines.append(f"**{i}. {name}** - {score} points")
+
+    leaderboard_text = "\n".join(leaderboard_lines)
+    title = "🏆 **All-Time Leaderboard**" if not round_over else "🏆 **Leaderboard after this round:**"
+    await channel.send(f"{title}\n{leaderboard_text}")
+
 @bot.command()
 async def leaderboard(ctx):
     await show_leaderboard(ctx.channel)
-
-async def show_leaderboard(channel):
-    if not players:
-        await channel.send("Nobody scored anything! 💀")
-        return
-
-    sorted_scores = sorted(players.items(), key=lambda x: x[1], reverse=True)
-    leaderboard_text = "\n".join([f"{name}: {score}" for name, score in sorted_scores])
-    await channel.send(f"🏆 Round Leaderboard:\n{leaderboard_text}")
 
 @bot.command()
 async def endquiz(ctx):
@@ -170,7 +206,7 @@ async def on_message(message):
         player = message.author.name
         players[player] = players.get(player, 0) + 15
         await message.channel.send(
-            f"⚡ Fastest Finger! ✅ Correct, {player}! +15 points 🎉 (Total: {players[player]} points)"
+            f"⚡ Fastest Finger! ✅ Correct, {player}! +15 points 🎉 (Total this round: {players[player]} points)"
         )
         return
 
