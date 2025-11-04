@@ -6,7 +6,6 @@ import json
 import random
 import asyncio
 from rapidfuzz import fuzz
-from datetime import datetime
 
 LEADERBOARD_FILE = "leaderboard.json"
 
@@ -18,6 +17,7 @@ def load_questions():
         return data
 
 questions = load_questions()
+
 current_question = None
 current_answer = None
 players = {}  # Current round points, reset each round
@@ -66,8 +66,9 @@ async def on_ready():
         guild = bot.guilds[0]
         print(f"First guild: {guild.name} ({guild.id})")
         for channel in guild.text_channels:
-            print(f"Checking channel: {channel.name} ({channel.id}) - Permissions: Send Messages={channel.permissions_for(guild.me).send_messages}, Read Messages={channel.permissions_for(guild.me).read_messages}")
-            if channel.permissions_for(guild.me).send_messages and channel.permissions_for(guild.me).read_messages:
+            perms = channel.permissions_for(guild.me)
+            print(f"Checking channel: {channel.name} ({channel.id}) - Permissions: Send Messages={perms.send_messages}, Read Messages={perms.read_messages}")
+            if perms.send_messages and perms.read_messages:
                 global quiz_channel_id
                 quiz_channel_id = channel.id
                 print(f"Quiz will run in channel: {channel.name} ({channel.id})")
@@ -84,12 +85,13 @@ async def start_new_round(guild):
         print("A quiz is already running, but a new round was triggered.")
         return
 
+    print(f"Starting new round in guild: {guild.name}")
     game_active = True
     players.clear()
     answered_this_round.clear()
     current_question_index = 0
     current_round_questions = random.sample(questions, min(NUMBER_OF_QUESTIONS_PER_ROUND, len(questions)))
-    accepting_answers = False # Initialize to False at the start of a round
+    accepting_answers = False  # Initialize to False at the start of a round
 
     # Automatically enroll all non-bot members present at the start
     for member in guild.members:
@@ -99,6 +101,13 @@ async def start_new_round(guild):
     if quiz_channel_id:
         channel = bot.get_channel(quiz_channel_id)
         if channel:
+            permissions = channel.permissions_for(channel.guild.me)
+            if not permissions.send_messages or not permissions.read_messages:
+                print(f"Missing permissions to send/read messages in channel {channel.name}")
+                await channel.send("⚠️ I don't have permission to send or read messages in this channel. Please update my permissions.")
+                game_active = False
+                return
+
             await channel.send(f"🎉 New quiz round starting! {len(current_round_questions)} questions ahead!")
             await ask_next_question(channel)
         else:
@@ -115,17 +124,28 @@ async def ask_next_question(channel):
         return
 
     if current_question_index >= len(current_round_questions):
-        game_active = False
+        # Round over
         await channel.send("🏁 Round over!")
         await show_leaderboard(channel, round_over=True)
         await channel.send(f"Next round starting in {DELAY_BETWEEN_ROUNDS} seconds... Get ready!")
+
         await asyncio.sleep(DELAY_BETWEEN_ROUNDS)
+
+        restarted = False
         for guild in bot.guilds:
             if guild.get_channel(channel.id):
-                await start_new_round(guild)
-                break
+                try:
+                    await start_new_round(guild)
+                    restarted = True
+                    break
+                except Exception as e:
+                    print(f"Error starting new round in guild {guild.name}: {e}")
+
+        if not restarted:
+            await channel.send("⚠️ Error: Could not find guild with the quiz channel to start new round.")
         return
 
+    # Ask the next question
     q = current_round_questions[current_question_index]
     current_question = q["question"]
     current_answer = q["answer"].lower()
@@ -134,7 +154,7 @@ async def ask_next_question(channel):
     accepting_answers = True  # Start accepting answers for the new question
 
     current_question_index += 1
-    # Added permission check for debugging
+
     permissions = channel.permissions_for(channel.guild.me)
     print(f"Bot has Send Messages permission in #{channel.name}: {permissions.send_messages}")
     print(f"Bot has View Channel permission in #{channel.name}: {permissions.view_channel}")
@@ -143,7 +163,7 @@ async def ask_next_question(channel):
 
     try:
         await asyncio.sleep(10)  # Wait for answers
-        accepting_answers = False # Stop accepting answers after time is up
+        accepting_answers = False  # Stop accepting answers after time is up
         if not answered_correctly:
             await channel.send(f"⏰ Time's up! The correct answer was: **{current_answer}**")
         await asyncio.sleep(7)  # Short delay before the next question
@@ -170,9 +190,8 @@ async def show_leaderboard(channel, round_over=False):
     for i, (name, score) in enumerate(sorted_scores, start=1):
         leaderboard_lines.append(f"**{i}. {name}** - {score} points")
 
-    leaderboard_text = "\n".join(leaderboard_lines)
     title = "🏆 **All-Time Leaderboard**" if not round_over else "🏆 **Leaderboard after this round:**"
-    await channel.send(f"{title}\n{leaderboard_text}")
+    await channel.send(f"{title}\n" + "\n".join(leaderboard_lines))
 
 @bot.command()
 async def leaderboard(ctx):
