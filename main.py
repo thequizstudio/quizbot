@@ -18,7 +18,7 @@ def load_questions():
 questions = load_questions()
 
 current_question = None
-current_answer = None  # fix: no .title() here
+current_answer = None
 players = {}  # current round scores
 game_active = False
 current_round_questions = []
@@ -69,8 +69,13 @@ def get_round_categories(questions_for_round):
     for q in questions_for_round:
         question_text = q.get("question", "")
         first_line = question_text.split('\n')[0].strip()
-        category = first_line.split(' ')[0].strip().lower()  # lowercase
-        if category:
+        parts = first_line.split(' ', 1)
+        if len(parts) == 2:
+            category_word = parts[0].lower().capitalize()  # Capitalize first letter
+            emoji = parts[1].strip()
+            categories.add(f"{category_word} {emoji}")
+        else:
+            category = parts[0].lower().capitalize()
             categories.add(category)
     return sorted(categories)
 
@@ -116,11 +121,10 @@ async def start_new_round(guild):
 
     channel = bot.get_channel(quiz_channel_id)
     if channel:
+        # Send categories preview before round start
         categories = get_round_categories(current_round_questions)
-        if categories:
-            # Join categories with line breaks instead of commas
-            categories_preview = "Next up:\n" + "\n".join(categories) + "."
-            await send_embed(channel, categories_preview, title="🎯 Categories Preview")
+        categories_text = ", ".join(categories)
+        await send_embed(channel, f"Categories: {categories_text}", title="🎯 Next Round")
 
         await send_embed(channel, f"New quiz round starting! {len(current_round_questions)} questions ahead! 🎉", title="🎲 Quiz Starting")
         await ask_next_question(channel)
