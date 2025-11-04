@@ -208,7 +208,7 @@ async def on_message(message):
         player = message.author.display_name
         players[player] = players.get(player, 0) + 15
         await message.channel.send(
-            f"⚡ Fastest Finger! ✅ Correct, {player}! +15 points 🎉 (Total this round: {players[player]} points)"
+            f"✅ Correct, {player}! {current_answer} for +15 points 🎉 (Total this round: {players[player]} points)"
         )
         return
 
