@@ -62,7 +62,7 @@ def save_leaderboard(data):
     except Exception as e:
         print(f"Error saving leaderboard: {e}")
 
-leaderboard = load_leaderboard()  # Persistent total wins/scores
+leaderboard_data = load_leaderboard()  # Persistent total wins/scores
 
 # --- Bot events and commands ---
 
@@ -187,22 +187,22 @@ async def ask_next_question(channel):
         print("Error during question timing:", e)
 
 async def show_leaderboard(channel, round_over=False):
-    global leaderboard
+    global leaderboard_data
 
     if round_over:
         # Add current round points to persistent leaderboard safely
         try:
             for player, score in players.items():
-                leaderboard[player] = leaderboard.get(player, 0) + score
-            save_leaderboard(leaderboard)
+                leaderboard_data[player] = leaderboard_data.get(player, 0) + score
+            save_leaderboard(leaderboard_data)
         except Exception as e:
             print(f"Error updating leaderboard after round: {e}")
 
-    if not leaderboard:
+    if not leaderboard_data:
         await channel.send("Nobody scored anything so far! 💀")
         return
 
-    sorted_scores = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True)
+    sorted_scores = sorted(leaderboard_data.items(), key=lambda x: x[1], reverse=True)
     leaderboard_lines = []
     for i, (name, score) in enumerate(sorted_scores, start=1):
         leaderboard_lines.append(f"**{i}. {name}** - {score} points")
