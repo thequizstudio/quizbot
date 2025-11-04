@@ -18,7 +18,7 @@ def load_questions():
 questions = load_questions()
 
 current_question = None
-current_answer = None
+current_answer.title() = None
 players = {}  # current round scores
 game_active = False
 current_round_questions = []
@@ -107,7 +107,7 @@ async def start_new_round(guild):
         game_active = False
 
 async def ask_next_question(channel):
-    global current_question, current_answer, current_question_index, answered_correctly, game_active, answered_this_round, accepting_answers
+    global current_question, current_answer.title(), current_question_index, answered_correctly, game_active, answered_this_round, accepting_answers
 
     if not game_active:
         return
@@ -129,7 +129,7 @@ async def ask_next_question(channel):
 
     q = current_round_questions[current_question_index]
     current_question = q["question"]
-    current_answer = q["answer"].lower()
+    current_answer.title() = q["answer"].lower()
     answered_correctly = []
     answered_this_round = set()
     accepting_answers = True
@@ -146,14 +146,14 @@ async def ask_next_question(channel):
         accepting_answers = False
 
         if not answered_correctly:
-            await channel.send(f"⏰ Time's up! No one answered correctly. The answer was: **{current_answer}**")
+            await channel.send(f"⏰ Time's up! No one answered correctly. The answer was: **{current_answer.title()}**")
         else:
             lines = []
             for i, (player, pts) in enumerate(answered_correctly, start=1):
                 lines.append(f"{i}. {player} (+{pts} points)")
             winners_text = "\n".join(lines)
             await channel.send(
-                f"⏰ Time's up! The correct answer was: **{current_answer}**\n\n"
+                f"⏰ Time's up! The correct answer was: **{current_answer.title()}**\n\n"
                 f"🏅 Correct answers in order:\n{winners_text}"
             )
 
@@ -198,7 +198,7 @@ async def endquiz(ctx):
 
 @bot.event
 async def on_message(message):
-    global current_question, current_answer, answered_correctly, game_active, answered_this_round, accepting_answers
+    global current_question, current_answer.title(), answered_correctly, game_active, answered_this_round, accepting_answers
 
     await bot.process_commands(message)
 
@@ -212,7 +212,7 @@ async def on_message(message):
         return
 
     user_answer = message.content.strip()
-    match_score = fuzz.ratio(user_answer.lower(), current_answer)
+    match_score = fuzz.ratio(user_answer.lower(), current_answer.title())
 
     if (
         match_score >= 85
