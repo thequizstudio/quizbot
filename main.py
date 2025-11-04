@@ -128,10 +128,10 @@ async def start_new_round(guild):
     if channel:
         categories = get_round_categories(current_round_questions)
         if categories:
-            categories_preview = "Next up: " + ", ".join(categories) + "."
-            await send_embed(channel, categories_preview, title="🎯 Categories Preview")
+            categories_preview = "Categories: " + ", ".join(categories) + "."
+            await send_embed(channel, categories_preview, title="🎯 Next Round")
 
-        await send_embed(channel, f"New quiz round starting! {len(current_round_questions)} questions ahead! 🎉", title="🎲 Quiz Starting")
+        await send_embed(channel, f"New trivia round starting! {len(current_round_questions)} questions ahead! 🎉", title="🎲 Quiz Starting")
         await ask_next_question(channel)
     else:
         print("Quiz channel not found!")
