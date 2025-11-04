@@ -69,20 +69,10 @@ def get_round_categories(questions_for_round):
     for q in questions_for_round:
         question_text = q.get("question", "")
         first_line = question_text.split('\n')[0].strip()
-        category = first_line.split(' ')[0].strip().upper()
+        category = first_line.split(' ')[0].strip().lower()  # lowercase
         if category:
             categories.add(category)
     return sorted(categories)
-
-def clean_question_text(question_text):
-    # Remove category and emoji prefix, assume format "CATEGORY EMOJI\n\n Actual question?"
-    parts = question_text.split('\n', 2)
-    if len(parts) >= 3:
-        return parts[2].strip()
-    elif len(parts) == 2:
-        return parts[1].strip()
-    else:
-        return question_text.strip()
 
 @bot.event
 async def on_ready():
@@ -128,10 +118,11 @@ async def start_new_round(guild):
     if channel:
         categories = get_round_categories(current_round_questions)
         if categories:
-            categories_preview = "Categories: " + ", ".join(categories) + "."
-            await send_embed(channel, categories_preview, title="🎯 Next Round")
+            # Join categories with line breaks instead of commas
+            categories_preview = "Next up:\n" + "\n".join(categories) + "."
+            await send_embed(channel, categories_preview, title="🎯 Categories Preview")
 
-        await send_embed(channel, f"New trivia round starting! {len(current_round_questions)} questions ahead! 🎉", title="🎲 Quiz Starting")
+        await send_embed(channel, f"New quiz round starting! {len(current_round_questions)} questions ahead! 🎉", title="🎲 Quiz Starting")
         await ask_next_question(channel)
     else:
         print("Quiz channel not found!")
@@ -168,8 +159,7 @@ async def ask_next_question(channel):
         return
 
     q = current_round_questions[current_question_index]
-    raw_question_text = q["question"]
-    current_question = clean_question_text(raw_question_text)
+    current_question = q["question"]
     current_answer = q["answer"].lower()
     answered_correctly = []
     answered_this_round = set()
