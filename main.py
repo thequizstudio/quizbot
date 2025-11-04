@@ -28,7 +28,7 @@ answered_correctly = False
 answered_this_round = set()
 quiz_channel_id = None  # Store the ID of the channel where the quiz is running
 NUMBER_OF_QUESTIONS_PER_ROUND = 3  # Adjust as needed
-DELAY_BETWEEN_ROUNDS = 10  # Seconds
+DELAY_BETWEEN_ROUNDS = 30  # Seconds
 accepting_answers = False  # New global flag
 
 intents = discord.Intents.default()
@@ -39,16 +39,28 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 def load_leaderboard():
     if os.path.exists(LEADERBOARD_FILE):
-        with open(LEADERBOARD_FILE, "r") as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return {}
+        try:
+            with open(LEADERBOARD_FILE, "r") as f:
+                data = json.load(f)
+                if not isinstance(data, dict):
+                    print("Leaderboard file is not a dictionary, resetting.")
+                    return {}
+                return data
+        except json.JSONDecodeError:
+            print("Leaderboard JSON decode error, resetting leaderboard.")
+            return {}
+        except Exception as e:
+            print(f"Unexpected error loading leaderboard: {e}")
+            return {}
     return {}
 
 def save_leaderboard(data):
-    with open(LEADERBOARD_FILE, "w") as f:
-        json.dump(data, f, indent=2)
+    try:
+        with open(LEADERBOARD_FILE, "w") as f:
+            json.dump(data, f, indent=2)
+        print("Leaderboard saved successfully.")
+    except Exception as e:
+        print(f"Error saving leaderboard: {e}")
 
 leaderboard = load_leaderboard()  # Persistent total wins/scores
 
@@ -126,7 +138,9 @@ async def ask_next_question(channel):
     if current_question_index >= len(current_round_questions):
         # Round over
         await channel.send("🏁 Round over!")
+        print("Round over: showing leaderboard now...")
         await show_leaderboard(channel, round_over=True)
+        print("Leaderboard shown, waiting to start next round...")
         await channel.send(f"Next round starting in {DELAY_BETWEEN_ROUNDS} seconds... Get ready!")
 
         await asyncio.sleep(DELAY_BETWEEN_ROUNDS)
@@ -176,10 +190,13 @@ async def show_leaderboard(channel, round_over=False):
     global leaderboard
 
     if round_over:
-        # Add current round points to persistent leaderboard
-        for player, score in players.items():
-            leaderboard[player] = leaderboard.get(player, 0) + score
-        save_leaderboard(leaderboard)
+        # Add current round points to persistent leaderboard safely
+        try:
+            for player, score in players.items():
+                leaderboard[player] = leaderboard.get(player, 0) + score
+            save_leaderboard(leaderboard)
+        except Exception as e:
+            print(f"Error updating leaderboard after round: {e}")
 
     if not leaderboard:
         await channel.send("Nobody scored anything so far! 💀")
