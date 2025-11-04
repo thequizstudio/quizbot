@@ -23,7 +23,7 @@ players = {}  # current round scores
 game_active = False
 current_round_questions = []
 current_question_index = 0
-answered_correctly = False
+answered_correctly = []  # Now a list of tuples: [(player, points), ...]
 answered_this_round = set()
 quiz_channel_id = None
 NUMBER_OF_QUESTIONS_PER_ROUND = 3
@@ -79,7 +79,7 @@ async def on_ready():
     print("No suitable channel found to run the quiz.")
 
 async def start_new_round(guild):
-    global game_active, players, answered_this_round, current_question_index, current_round_questions, accepting_answers
+    global game_active, players, answered_this_round, current_question_index, current_round_questions, accepting_answers, answered_correctly
 
     if game_active:
         print("Quiz already running; ignoring new round request.")
@@ -92,6 +92,7 @@ async def start_new_round(guild):
     current_question_index = 0
     current_round_questions = random.sample(questions, min(NUMBER_OF_QUESTIONS_PER_ROUND, len(questions)))
     accepting_answers = False
+    answered_correctly = []
 
     for member in guild.members:
         if not member.bot:
@@ -129,7 +130,7 @@ async def ask_next_question(channel):
     q = current_round_questions[current_question_index]
     current_question = q["question"]
     current_answer = q["answer"].lower()
-    answered_correctly = False
+    answered_correctly = []
     answered_this_round = set()
     accepting_answers = True
 
@@ -143,8 +144,19 @@ async def ask_next_question(channel):
     try:
         await asyncio.sleep(10)
         accepting_answers = False
+
         if not answered_correctly:
-            await channel.send(f"⏰ Time's up! The correct answer was: **{current_answer}**")
+            await channel.send(f"⏰ Time's up! No one answered correctly. The answer was: **{current_answer}**")
+        else:
+            lines = []
+            for i, (player, pts) in enumerate(answered_correctly, start=1):
+                lines.append(f"{i}. {player} (+{pts} points)")
+            winners_text = "\n".join(lines)
+            await channel.send(
+                f"⏰ Time's up! The correct answer was: **{current_answer}**\n\n"
+                f"🏅 Correct answers in order:\n{winners_text}"
+            )
+
         await asyncio.sleep(7)
         if game_active:
             await ask_next_question(channel)
@@ -202,18 +214,21 @@ async def on_message(message):
     user_answer = message.content.strip()
     match_score = fuzz.ratio(user_answer.lower(), current_answer)
 
-    if match_score >= 85 and not answered_correctly and message.author.id not in answered_this_round:
-        answered_correctly = True
+    if (
+        match_score >= 85
+        and message.author.id not in answered_this_round
+        and len(answered_correctly) < 3
+    ):
         answered_this_round.add(message.author.id)
         player = message.author.display_name
-        players[player] = players.get(player, 0) + 15
-        await message.channel.send(
-            f"✅ Correct, {player}! {current_answer} for +15 points 🎉 (Total this round: {players[player]} points)"
-        )
+        points_awarded = [15, 10, 5][len(answered_correctly)]
+        players[player] = players.get(player, 0) + points_awarded
+        answered_correctly.append((player, points_awarded))
+        # No immediate message; results shown after time is up
         return
 
-    if game_active and message.author.name not in players and not message.author.bot:
-        players[message.author.name] = players.get(message.author.name, 0)
+    if game_active and message.author.display_name not in players and not message.author.bot:
+        players[message.author.display_name] = players.get(message.author.display_name, 0)
 
 load_dotenv()
 bot.run(os.getenv("DISCORD_TOKEN"))
