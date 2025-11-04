@@ -253,7 +253,8 @@ async def show_leaderboard(channel, round_over=False):
         return
 
     sorted_scores = sorted(leaderboard_data.items(), key=lambda x: x[1], reverse=True)
-    lines = [f"**{i+1}. {name}** ({score} points)" for i, (name, score) in enumerate(sorted_scores)]
+    # Name and points on same line, bold entire line:
+    lines = [f"**{i+1}. {name} ({score} points)**" for i, (name, score) in enumerate(sorted_scores)]
 
     title = "🏆 Daily Leaderboard 🏆"
     await send_embed(channel, "\n".join(lines), title=title)
