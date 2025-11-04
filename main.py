@@ -115,12 +115,14 @@ async def ask_next_question(channel):
     if current_question_index >= len(current_round_questions):
         game_active = False
 
-        # Find the winner for the round
+        # Determine top scorer(s)
         if players:
-            winner = max(players.items(), key=lambda x: x[1])[0]
-            await channel.send(f"🏁 Round Over! And the winner is **{winner}** 🎉")
+            max_score = max(players.values())
+            winners = [player for player, score in players.items() if score == max_score]
+            winners_text = ", ".join(winners)
+            await channel.send(f"🏁 Round over! And the winner is {winners_text}!")
         else:
-            await channel.send("🏁 Round Over! No winners this round.")
+            await channel.send("🏁 Round over! No winners this round.")
 
         print("Round over, showing leaderboard...")
         await show_leaderboard(channel, round_over=True)
@@ -146,7 +148,7 @@ async def ask_next_question(channel):
     perms = channel.permissions_for(channel.guild.me)
     print(f"Permissions in #{channel.name}: send_messages={perms.send_messages}, view_channel={perms.view_channel}")
 
-    await channel.send(f"❓ Question {current_question_index}:\n**{current_question}**")
+    await channel.send(f"Question {current_question_index}:\n**{current_question}**")
 
     try:
         await asyncio.sleep(10)
@@ -188,7 +190,7 @@ async def show_leaderboard(channel, round_over=False):
     sorted_scores = sorted(leaderboard_data.items(), key=lambda x: x[1], reverse=True)
     lines = [f"**{i+1}. {name}** ({score} points)" for i, (name, score) in enumerate(sorted_scores)]
 
-    title = "🏆 **Daily Leaderboard:**" if round_over else "🏆 **Daily Leaderboard**"
+    title = "🏆 **Daily Leaderboard ** 🏆" if round_over else "🏆 **Daily Leaderboard**"
     await channel.send(f"{title}\n" + "\n".join(lines))
 
 @bot.command()
