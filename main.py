@@ -169,7 +169,7 @@ async def ask_next_question(channel):
             winners_text = "\n".join(lines)
             await send_embed(
                 channel,
-                f"The correct answer was: **{current_answer.title()}**\n\n🏅 Correct answers in order:\n{winners_text}",
+                f"The correct answer was: **{current_answer.title()}**\n\n🏅 Scores:\n{winners_text}",
                 title="⏰ Time's Up!"
             )
 
