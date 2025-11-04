@@ -17,8 +17,36 @@ def load_questions():
 
 questions = load_questions()
 
+# Emoticon mapping by category name lowercase
+CATEGORY_EMOJIS = {
+    "geography": "🌐",
+    "art": "🎨",
+    "astronomy": "🪐",
+    "history": "🕰️",
+    "literature": "🎭",
+    "sport": "⚽",
+    "cinema": "🎬",
+    "science": "🔬",
+    "philosophy": "🧠",
+    "biology": "🧬",
+    "mythology": "🐉",
+    "economics": "🏦",
+    "chemistry": "💎",
+    "math": "🧮",
+    "space": "🌌",
+    "technology": "🔧",
+    "tv shows": "📺",
+    "movies": "🎥",
+    "music": "🎶",
+    "physics": "⚛️",
+    "sports": "🏅",
+    "entertainment": "🎬",
+    "books": "📚",
+    # Add more as needed
+}
+
 current_question = None
-current_answer = None
+current_answer = None  # fix: no .title() here
 players = {}  # current round scores
 game_active = False
 current_round_questions = []
@@ -64,20 +92,29 @@ async def send_embed(channel, message, title=None, color=0x3498db):
         embed.title = title
     await channel.send(embed=embed)
 
-def get_round_categories(questions_for_round):
-    categories = set()
-    for q in questions_for_round:
-        question_text = q.get("question", "")
-        first_line = question_text.split('\n')[0].strip()
-        parts = first_line.split(' ', 1)
-        if len(parts) == 2:
-            category_word = parts[0].lower().capitalize()  # Capitalize first letter
-            emoji = parts[1].strip()
-            categories.add(f"{category_word} {emoji}")
-        else:
-            category = parts[0].lower().capitalize()
-            categories.add(category)
-    return sorted(categories)
+def get_category_from_question(qtext):
+    # Extract category from start of question, before emoji and two newlines
+    # Example: "GEOGRAPHY 🌐\n\n What is..."
+    # Split by newline, then split by space to isolate category word
+    first_line = qtext.split("\n")[0]
+    # Remove emoji (last character if emoji)
+    if len(first_line) > 0 and first_line[-1] in CATEGORY_EMOJIS.values():
+        first_line = first_line[:-1].strip()
+    return first_line.lower()
+
+def get_round_categories(questions_list):
+    cats = []
+    for q in questions_list:
+        cat = get_category_from_question(q["question"])
+        if cat not in cats:
+            cats.append(cat)
+    # Capitalize first letter and add emoji if available
+    formatted = []
+    for cat in cats:
+        cap_cat = cat.capitalize()
+        emoji = CATEGORY_EMOJIS.get(cat, "")
+        formatted.append(f"{cap_cat} {emoji}".strip())
+    return formatted
 
 @bot.event
 async def on_ready():
@@ -123,10 +160,11 @@ async def start_new_round(guild):
     if channel:
         # Send categories preview before round start
         categories = get_round_categories(current_round_questions)
-        categories_text = ", ".join(categories)
-        await send_embed(channel, f"Categories: {categories_text}", title="🎯 Next Round")
+        categories_text = "\n".join(categories)  # linebreak separated
+        await send_embed(channel, f"Next up:\n{categories_text}", title="🎯 Upcoming Categories")
 
         await send_embed(channel, f"New quiz round starting! {len(current_round_questions)} questions ahead! 🎉", title="🎲 Quiz Starting")
+        await asyncio.sleep(7)  # 7 second delay after Quiz Starting message
         await ask_next_question(channel)
     else:
         print("Quiz channel not found!")
