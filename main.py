@@ -179,7 +179,8 @@ async def show_leaderboard(channel, round_over=False):
         return
 
     sorted_scores = sorted(leaderboard_data.items(), key=lambda x: x[1], reverse=True)
-    lines = [f"**{i+1}. {name}** + {score} points" for i, (name, score) in enumerate(sorted_scores)]
+    lines = [f"**{i+1}. {name}** ({score} points)" for i, (name, score) in enumerate(sorted_scores)]
+
     title = "🏆 **Leaderboard:**" if round_over else "🏆 **Daily Leaderboard**"
     await channel.send(f"{title}\n" + "\n".join(lines))
 
