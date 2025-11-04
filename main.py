@@ -34,6 +34,10 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+async def send_boxed_message(channel, message):
+    boxed = f"```{message}```"
+    await channel.send(boxed)
+
 def load_leaderboard():
     if os.path.exists(LEADERBOARD_FILE):
         try:
@@ -100,7 +104,7 @@ async def start_new_round(guild):
 
     channel = bot.get_channel(quiz_channel_id)
     if channel:
-        await channel.send(f"🎉 New quiz round starting! {len(current_round_questions)} questions ahead!")
+        await send_boxed_message(channel, f"🎉 New quiz round starting! {len(current_round_questions)} questions ahead!")
         await ask_next_question(channel)
     else:
         print("Quiz channel not found!")
@@ -120,20 +124,20 @@ async def ask_next_question(channel):
             max_score = max(players.values())
             winners = [player for player, score in players.items() if score == max_score]
             winners_text = ", ".join(winners)
-            await channel.send(f"🏁 Round over! And the winner is {winners_text}!")
+            await send_boxed_message(channel, f"🏁 Round over! And the winner is {winners_text}!")
         else:
-            await channel.send("🏁 Round over! No winners this round.")
+            await send_boxed_message(channel, "🏁 Round over! No winners this round.")
 
         print("Round over, showing leaderboard...")
         await show_leaderboard(channel, round_over=True)
-        await channel.send(f"Next round starting in {DELAY_BETWEEN_ROUNDS} seconds... Get ready!")
+        await send_boxed_message(channel, f"Next round starting in {DELAY_BETWEEN_ROUNDS} seconds... Get ready!")
         await asyncio.sleep(DELAY_BETWEEN_ROUNDS)
 
         for guild in bot.guilds:
             if guild.get_channel(channel.id):
                 await start_new_round(guild)
                 return
-        await channel.send("⚠️ Could not find guild for quiz channel to start next round.")
+        await send_boxed_message(channel, "⚠️ Could not find guild for quiz channel to start next round.")
         return
 
     q = current_round_questions[current_question_index]
@@ -148,20 +152,21 @@ async def ask_next_question(channel):
     perms = channel.permissions_for(channel.guild.me)
     print(f"Permissions in #{channel.name}: send_messages={perms.send_messages}, view_channel={perms.view_channel}")
 
-    await channel.send(f"Question {current_question_index}:\n**{current_question}**")
+    await send_boxed_message(channel, f"❓ Question {current_question_index}:\n**{current_question}**")
 
     try:
         await asyncio.sleep(10)
         accepting_answers = False
 
         if not answered_correctly:
-            await channel.send(f"⏰ Time's up! No one answered correctly. The answer was: **{current_answer.title()}**")
+            await send_boxed_message(channel, f"⏰ Time's up! No one answered correctly. The answer was: **{current_answer.title()}**")
         else:
             lines = []
             for i, (player, pts) in enumerate(answered_correctly, start=1):
                 lines.append(f"{i}. {player} (+{pts} points)")
             winners_text = "\n".join(lines)
-            await channel.send(
+            await send_boxed_message(
+                channel,
                 f"⏰ Time's up! The correct answer was: **{current_answer.title()}**\n\n"
                 f"🏅 Correct answers in order:\n{winners_text}"
             )
@@ -184,14 +189,14 @@ async def show_leaderboard(channel, round_over=False):
             print(f"Error updating leaderboard: {e}")
 
     if not leaderboard_data:
-        await channel.send("Nobody scored anything so far! 💀")
+        await send_boxed_message(channel, "Nobody scored anything so far! 💀")
         return
 
     sorted_scores = sorted(leaderboard_data.items(), key=lambda x: x[1], reverse=True)
     lines = [f"**{i+1}. {name}** ({score} points)" for i, (name, score) in enumerate(sorted_scores)]
 
     title = "🏆 **Daily Leaderboard ** 🏆" if round_over else "🏆 **Daily Leaderboard**"
-    await channel.send(f"{title}\n" + "\n".join(lines))
+    await send_boxed_message(channel, f"{title}\n" + "\n".join(lines))
 
 @bot.command()
 async def leaderboard(ctx):
@@ -201,10 +206,10 @@ async def leaderboard(ctx):
 async def endquiz(ctx):
     global game_active
     if not game_active:
-        await ctx.send("No quiz is running.")
+        await send_boxed_message(ctx, "No quiz is running.")
         return
     game_active = False
-    await ctx.send("🛑 Quiz ended.")
+    await send_boxed_message(ctx, "🛑 Quiz ended.")
 
 @bot.event
 async def on_message(message):
