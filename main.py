@@ -95,7 +95,7 @@ async def start_new_round(guild):
 
     for member in guild.members:
         if not member.bot:
-            players[member.name] = 0
+            players[member.display_name] = 0
 
     channel = bot.get_channel(quiz_channel_id)
     if channel:
