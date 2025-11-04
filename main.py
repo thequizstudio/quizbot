@@ -161,7 +161,7 @@ async def start_new_round(guild):
         # Send categories preview before round start
         categories = get_round_categories(current_round_questions)
         categories_text = "\n".join(categories)  # linebreak separated
-        await send_embed(channel, f"Next up:\n{categories_text}", title="🎯 Upcoming Categories")
+        await send_embed(channel, f"{categories_text}", title="🎯 Next Round Preview")
 
         await send_embed(channel, f"New quiz round starting! {len(current_round_questions)} questions ahead! 🎉", title="🎲 Quiz Starting")
         await asyncio.sleep(7)  # 7 second delay after Quiz Starting message
