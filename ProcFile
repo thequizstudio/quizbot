@@ -1,1 +1,1 @@
-web: python quiz_bot.py
+web: main/python quiz_bot.py
