@@ -93,11 +93,7 @@ async def send_embed(channel, message, title=None, color=0x3498db):
     await channel.send(embed=embed)
 
 def get_category_from_question(qtext):
-    # Extract category from start of question, before emoji and two newlines
-    # Example: "GEOGRAPHY 🌐\n\n What is..."
-    # Split by newline, then split by space to isolate category word
     first_line = qtext.split("\n")[0]
-    # Remove emoji (last character if emoji)
     if len(first_line) > 0 and first_line[-1] in CATEGORY_EMOJIS.values():
         first_line = first_line[:-1].strip()
     return first_line.lower()
@@ -108,7 +104,6 @@ def get_round_categories(questions_list):
         cat = get_category_from_question(q["question"])
         if cat not in cats:
             cats.append(cat)
-    # Capitalize first letter and add emoji if available
     formatted = []
     for cat in cats:
         cap_cat = cat.capitalize()
@@ -158,13 +153,12 @@ async def start_new_round(guild):
 
     channel = bot.get_channel(quiz_channel_id)
     if channel:
-        # Send categories preview before round start
         categories = get_round_categories(current_round_questions)
-        categories_text = "\n".join(categories)  # linebreak separated
+        categories_text = "\n".join(categories)
         await send_embed(channel, f"{categories_text}", title="🎯 Next Round Preview")
 
         await send_embed(channel, f"New quiz round starting! {len(current_round_questions)} questions ahead! 🎉", title="🎲 Quiz Starting")
-        await asyncio.sleep(7)  # 7 second delay after Quiz Starting message
+        await asyncio.sleep(7)
         await ask_next_question(channel)
     else:
         print("Quiz channel not found!")
@@ -183,7 +177,8 @@ async def ask_next_question(channel):
             max_score = max(players.values())
             winners = [player for player, score in players.items() if score == max_score]
             winners_text = ", ".join(winners)
-            await send_embed(channel, f"And the winner is {winners_text}!", title="🏁 Round Over!")
+            # Updated winner message with points
+            await send_embed(channel, f"And the winner is {winners_text} with {max_score} points!", title="🏁 Round Over!")
         else:
             await send_embed(channel, "No winners this round.", title="🏁 Round Over!")
 
@@ -300,7 +295,6 @@ async def on_message(message):
         points_awarded = [15, 10, 5][len(answered_correctly)]
         players[player] = players.get(player, 0) + points_awarded
         answered_correctly.append((player, points_awarded))
-        # No immediate message; results shown after time is up
         return
 
     if game_active and message.author.display_name not in players and not message.author.bot:
