@@ -154,7 +154,7 @@ async def ask_next_question(channel):
     perms = channel.permissions_for(channel.guild.me)
     print(f"Permissions in #{channel.name}: send_messages={perms.send_messages}, view_channel={perms.view_channel}")
 
-    await send_embed(channel, f"**Question {current_question_index}:**\n{current_question}"))
+    await send_embed(channel, f"**Question {current_question_index}:**\n{current_question}")
 
     try:
         await asyncio.sleep(10)
