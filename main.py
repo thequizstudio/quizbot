@@ -19,14 +19,14 @@ questions = load_questions()
 
 current_question = None
 current_answer = None
-players = {}  # Current round points, reset each round
+players = {}  # current round scores
 game_active = False
 current_round_questions = []
 current_question_index = 0
 answered_correctly = False
 answered_this_round = set()
-quiz_channel_id = None  # Store the ID of the channel where the quiz is running
-NUMBER_OF_QUESTIONS_PER_ROUND = 2
+quiz_channel_id = None
+NUMBER_OF_QUESTIONS_PER_ROUND = 3
 DELAY_BETWEEN_ROUNDS = 30
 accepting_answers = False
 
@@ -43,8 +43,8 @@ def load_leaderboard():
                     print("Leaderboard file malformed, resetting.")
                     return {}
                 return data
-        except:
-            print("Error reading leaderboard file, resetting.")
+        except Exception as e:
+            print(f"Error reading leaderboard file: {e}")
             return {}
     return {}
 
@@ -60,15 +60,14 @@ leaderboard_data = load_leaderboard()
 
 @bot.event
 async def on_ready():
-    print("Bot is ready.")
+    print(f"Bot connected as {bot.user}!")
+    global quiz_channel_id
     while not bot.guilds:
         print("Waiting for guilds...")
         await asyncio.sleep(1)
-
     guild = bot.guilds[0]
     print(f"Connected to guild: {guild.name} ({guild.id})")
 
-    global quiz_channel_id
     for channel in guild.text_channels:
         perms = channel.permissions_for(guild.me)
         print(f"Checking channel: {channel.name} ({channel.id}), send_messages={perms.send_messages}, read_messages={perms.read_messages}")
@@ -77,13 +76,13 @@ async def on_ready():
             print(f"Quiz will run in channel: {channel.name}")
             await start_new_round(guild)
             return
-    print("No suitable channel found.")
+    print("No suitable channel found to run the quiz.")
 
 async def start_new_round(guild):
     global game_active, players, answered_this_round, current_question_index, current_round_questions, accepting_answers
 
     if game_active:
-        print("Quiz already running; ignoring start_new_round call.")
+        print("Quiz already running; ignoring new round request.")
         return
 
     print("Starting new round...")
@@ -113,7 +112,6 @@ async def ask_next_question(channel):
         return
 
     if current_question_index >= len(current_round_questions):
-        # End round
         game_active = False
         await channel.send("🏁 Round over!")
         print("Round over, showing leaderboard...")
@@ -183,7 +181,6 @@ async def endquiz(ctx):
     if not game_active:
         await ctx.send("No quiz is running.")
         return
-
     game_active = False
     await ctx.send("🛑 Quiz ended.")
 
@@ -200,3 +197,23 @@ async def on_message(message):
         or message.channel.id != quiz_channel_id
         or not accepting_answers
     ):
+        return
+
+    user_answer = message.content.strip()
+    match_score = fuzz.ratio(user_answer.lower(), current_answer)
+
+    if match_score >= 85 and not answered_correctly and message.author.id not in answered_this_round:
+        answered_correctly = True
+        answered_this_round.add(message.author.id)
+        player = message.author.name
+        players[player] = players.get(player, 0) + 15
+        await message.channel.send(
+            f"⚡ Fastest Finger! ✅ Correct, {player}! +15 points 🎉 (Total this round: {players[player]} points)"
+        )
+        return
+
+    if game_active and message.author.name not in players and not message.author.bot:
+        players[message.author.name] = players.get(message.author.name, 0)
+
+load_dotenv()
+bot.run(os.getenv("DISCORD_TOKEN"))
