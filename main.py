@@ -55,20 +55,13 @@ async def send_embed(channel, message, title=None, color=0x3498db):
         embed.title = title
     await channel.send(embed=embed)
 
-# ✅ Extract category (with emoji) directly from JSON question formatting
+# ✅ Extract category text (first line of the question)
 def get_category_from_question(question_text):
     return question_text.split("\n")[0].strip()
 
-# ✅ Build the category preview automatically — no main.py mapping needed
+# ✅ Show all 10 categories (duplicates allowed, matches question order)
 def get_round_categories(questions_list):
-    seen = set()
-    categories = []
-    for q in questions_list:
-        cat = get_category_from_question(q["question"])
-        if cat not in seen:
-            seen.add(cat)
-            categories.append(cat)
-    return categories
+    return [get_category_from_question(q["question"]) for q in questions_list]
 
 
 @bot.event
@@ -102,7 +95,6 @@ async def start_new_round(guild):
 
     channel = bot.get_channel(quiz_channel_id)
 
-    # ✅ Category preview uses JSON category lines directly
     categories = get_round_categories(current_round_questions)
     await send_embed(channel, "\n".join(categories), title="🎯 Next Round Preview")
 
