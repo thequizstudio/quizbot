@@ -99,6 +99,16 @@
   { "question": "ART 🎨\n\n Which artist painted the 'School of Athens'?", "answer": "Raphael" },
   { "question": "ART 🎨\n\n Which artist is known for creating 'Guernica'?", "answer": "Picasso" },
 
+{ "question": "BASEBALL ⚾\n\n What is the nickname of the St. Louis baseball team?", "answer": "Cardinals" },
+{ "question": "BASEBALL ⚾\n\n What is the nickname of the Toronto baseball team?", "answer": "Blue Jays" },
+{ "question": "BASEBALL ⚾\n\n What is the nickname of the Houston baseball team?", "answer": "Astros" },
+{ "question": "BASEBALL ⚾\n\n What is the nickname of the Detroit baseball team?", "answer": "Tigers" },
+{ "question": "BASEBALL ⚾\n\n What is the nickname of the Milwaukee baseball team?", "answer": "Brewers" }
+{ "question": "BASEBALL ⚾\n\n What is the nickname of the Chicago baseball team in the National League?", "answer": "Cubs" },
+{ "question": "BASEBALL ⚾\n\n What is the nickname of the Boston baseball team?", "answer": "Red Sox" },
+{ "question": "BASEBALL ⚾\n\n What is the nickname of the Los Angeles baseball team in the National League?", "answer": "Dodgers" },
+{ "question": "BASEBALL ⚾\n\n What is the nickname of the San Francisco baseball team?", "answer": "Giants" },
+
   { "question": "BASKETBALL 🏀\n\n What is the nickname of the Chicago Bulls' NBA team mascot?", "answer": "Benny" },
   { "question": "BASKETBALL 🏀\n\n What is the nickname of the Dallas NBA team?", "answer": "Mavericks" },
   { "question": "BASKETBALL 🏀\n\n What is the nickname of the Detroit basketball team?", "answer": "Pistons" },
@@ -140,7 +150,6 @@
 { "question": "CURRENCY 💰\n\n What is the currency of Norway?", "answer": "Krone" },
 { "question": "CURRENCY 💰\n\n What is the currency of Thailand?", "answer": "Baht" },
 
-
   { "question": "ENTERTAINMENT 🎬\n\n What is the name of the fictional country in 'Black Panther'?", "answer": "Wakanda" },
 
   { "question": "GEOGRAPHY 🌎\n\n What is the highest mountain in Africa?", "answer": "Kilimanjaro" },
@@ -160,7 +169,6 @@
 { "question": "ICE HOCKEY 🏒\n\n What is the nickname of the Chicago NHL team?", "answer": "Blackhawks" },
 { "question": "ICE HOCKEY 🏒\n\n What is the nickname of the Edmonton NHL team?", "answer": "Oilers" },
 { "question": "ICE HOCKEY 🏒\n\n What is the nickname of the New York NHL team based in Manhattan?", "answer": "Rangers" },
-
 
   { "question": "LITERATURE 📖\n\n What is the name of the fictional wizard school in 'Harry Potter'?", "answer": "Hogwarts" },
   { "question": "LITERATURE 📚\n\n What was the title of Stephen King's first novel?", "answer": "Carrie" },
@@ -203,7 +211,7 @@
 { "question": "HUMAN BODY 🫀\n\n What is the longest bone in the human body?", "answer": "Femur" },
 { "question": "HUMAN BODY 🫀\n\n Found in the ears, what is the smallest bone in the human body?", "answer": "Stapes" },
 { "question": "HUMAN BODY 🫀\n\n How many phalanges are there in a human hand?", "answer": "14" },
-{ "question": "HUMAN BODY 🫀\n\n Hair and nails are made from which hard protein?", "answer": "Keratin" },
+{ "question": "HUMAN BODY 🫀\n\n Human hair and nails are made from which hard protein?", "answer": "Keratin" },
     
   { "question": "SCIENCE 🔬\n\n What is the chemical symbol for Iron?", "answer": "Fe" },
   { "question": "SCIENCE 🔬\n\n What is the phenomenon where light bends as it passes through different mediums?", "answer": "Refraction" },
@@ -212,18 +220,17 @@
   { "question": "SOCCER ⚽\n\n What is the nickname of Newcastle United FC?", "answer": "Magpies" },
   { "question": "SOCCER ⚽\n\n Who hosted (and won) the 1998 FIFA World Cup?", "answer": "France" },
 
-  { "question": "SPACE 🌌\n\n Which planet has the most moons?", "answer": "Jupiter" },
+  { "question": "SPACE 🌌\n\n Which planet in the solar system has the most moons?", "answer": "Jupiter" },
   { "question": "SPACE 🌌\n\n What is the term for a star's death that results in a massive explosion?", "answer": "Supernova" },
   { "question": "SPACE 🌌\n\n What is the largest moon of Saturn?", "answer": "Titan" },
+  { "question": "SPACE 🌌\n\n Which planet has moons named after several Shakespeare characters?", "answer": "Uranus" },
 
-  { "question": "SPORTS  🏆\\n\n What country hosted the 2008 Summer Olympics?", "answer": "China" },
+  { "question": "SPORTS 🏆\\n\n What country hosted the 2008 Summer Olympics?", "answer": "China" },
   { "question": "SPORTS 🏆\n\n Dump, floater, and wipe, are terms used in which team sport?", "answer": "Volleyball" },
   { "question": "SPORTS 🏆\n\n In snooker, which ball has a value of six points?", "answer": "Pink" },
   { "question": "SPORTS 🏆\n\n What is the nickname of the New Zealand national rugby union team?", "answer": "All Blacks" },
   { "question": "SPORTS 🏆\n\n What is the nickname of the South African national rugby team?", "answer": "Springboks" },
   { "question": "SPORTS 🏆\n\n What is the nickname of the West Indies cricket team?", "answer": "Windies" },
-  { "question": "SPORTS 🏆\n\n What is the nickname of the Phoenix basketball team?", "answer": "Suns" },
-  { "question": "SPORTS 🏆\n\n What is the nickname of the Atlanta baseball team?", "answer": "Braves" },
   { "question": "SPORTS 🏆\n\n What is the maximum break in snooker?", "answer": "147" },
   { "question": "SPORTS 🏆\n\n What is the only sport to have been played on the Moon?", "answer": "Golf" },
 
@@ -233,12 +240,9 @@
   { "question": "TELEVISION 📺\n\n What is the name of the fictional town where 'Stranger Things' is set?", "answer": "Hawkins" },
   { "question": "TELEVISION 📺\n\n In 'Friends', what is the first name of Ross’s second wife?", "answer": "Emily" },
   { "question": "TELEVISION 📺\n\n In 'Friends', what is the surname of Monica and Ross", "answer": "Gellar" },
-  { "question": "TELEVISION 📺\n\n In 'The Office', what is the name of the paper company?", "answer": "Dunder Mifflin" },
+  { "question": "TELEVISION 📺\n\n In the U.S. version of 'The Office', what is the name of the paper company?", "answer": "Dunder Mifflin" },
   { "question": "TELEVISION 📺\n\n What Netflix series features a character called 'Joe Goldberg'?", "answer": "You" },
   { "question": "TELEVISION 📺\n\n What 2020 Disney+ series focuses on the character 'Wanda Maximoff'?", "answer": "WandaVision" },
-
-  { "question": "WORLD RIVERS 🌎\n\n What is the longest river in the world?", "answer": "Nile" },
-  { "question": "WORLD RIVERS 🌎\n\n What is the longest river in Asia?", "answer": "Yangtze" },
    
 { "question": "MATH 📐\n\n What is the square root of 169?", "answer": "13" },
 { "question": "MATH 📐\n\n What is 60% of 200?", "answer": "120" },
