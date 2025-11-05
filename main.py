@@ -98,7 +98,7 @@ async def start_new_round(guild):
     categories = get_round_categories(current_round_questions)
     await send_embed(channel, "\n".join(categories), title="🎯 Next Round Preview")
 
-    await send_embed(channel, f"New round starting! {len(current_round_questions)} questions! 🎉", title="🎲 Quiz Starting")
+    await send_embed(channel, f"New round starting! {len(current_round_questions)} questions! 🎉", title="🎲 Quiz Starting!")
     await asyncio.sleep(7)
 
     for index, q in enumerate(current_round_questions, start=1):
