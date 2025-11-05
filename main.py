@@ -36,7 +36,6 @@ CATEGORY_EMOJIS = {
     "space": "🌌",
     "technology": "🔧",
     "tv shows": "📺",
-    "movies": "🎥",
     "music": "🎶",
     "physics": "⚛️",
     "sports": "🏅",
