@@ -12,35 +12,10 @@ LEADERBOARD_FILE = "leaderboard.json"
 def load_questions():
     with open("questions.json", "r") as f:
         data = json.load(f)
-        print(f"Loaded {len(data)} questions.")
+        print(f"Loaded", len(data), "questions.")
         return data
 
 questions = load_questions()
-
-CATEGORY_EMOJIS = {
-    "geography": "🌐",
-    "art": "🎨",
-    "astronomy": "🪐",
-    "history": "🕰️",
-    "literature": "🎭",
-    "sport": "⚽",
-    "cinema": "🎬",
-    "science": "🔬",
-    "philosophy": "🧠",
-    "biology": "🧬",
-    "mythology": "🐉",
-    "economics": "🏦",
-    "chemistry": "💎",
-    "math": "🧮",
-    "space": "🌌",
-    "technology": "🔧",
-    "tv shows": "📺",
-    "music": "🎶",
-    "physics": "⚛️",
-    "sports": "🏅",
-    "entertainment": "🎬",
-    "books": "📚",
-}
 
 current_question = None
 current_answer = None
@@ -80,24 +55,21 @@ async def send_embed(channel, message, title=None, color=0x3498db):
         embed.title = title
     await channel.send(embed=embed)
 
-def get_category_from_question(qtext):
-    first_line = qtext.split("\n")[0]
-    if len(first_line) > 0 and first_line[-1] in CATEGORY_EMOJIS.values():
-        first_line = first_line[:-1].strip()
-    return first_line.lower()
+# ✅ Extract category (with emoji) directly from JSON question formatting
+def get_category_from_question(question_text):
+    return question_text.split("\n")[0].strip()
 
+# ✅ Build the category preview automatically — no main.py mapping needed
 def get_round_categories(questions_list):
-    cats = []
+    seen = set()
+    categories = []
     for q in questions_list:
         cat = get_category_from_question(q["question"])
-        if cat not in cats:
-            cats.append(cat)
-    formatted = []
-    for cat in cats:
-        cap_cat = cat.capitalize()
-        emoji = CATEGORY_EMOJIS.get(cat, "")
-        formatted.append(f"{cap_cat} {emoji}".strip())
-    return formatted
+        if cat not in seen:
+            seen.add(cat)
+            categories.append(cat)
+    return categories
+
 
 @bot.event
 async def on_ready():
@@ -112,6 +84,7 @@ async def on_ready():
             quiz_channel_id = channel.id
             await start_new_round(guild)
             return
+
 
 async def start_new_round(guild):
     global game_active, players, answered_correctly, answered_this_round, current_round_questions, accepting_answers
@@ -128,8 +101,11 @@ async def start_new_round(guild):
     current_round_questions = random.sample(questions, min(NUMBER_OF_QUESTIONS_PER_ROUND, len(questions)))
 
     channel = bot.get_channel(quiz_channel_id)
+
+    # ✅ Category preview uses JSON category lines directly
     categories = get_round_categories(current_round_questions)
     await send_embed(channel, "\n".join(categories), title="🎯 Next Round Preview")
+
     await send_embed(channel, f"New round starting! {len(current_round_questions)} questions! 🎉", title="🎲 Quiz Starting")
     await asyncio.sleep(7)
 
@@ -138,6 +114,7 @@ async def start_new_round(guild):
         await asyncio.sleep(7)
 
     await end_round(channel, guild)
+
 
 async def ask_single_question(channel, index, q):
     global current_question, current_answer, answered_correctly, answered_this_round, accepting_answers, players
@@ -158,6 +135,7 @@ async def ask_single_question(channel, index, q):
     else:
         results = "\n".join(f"{i+1}. {p} (+{pts} pts)" for i, (p, pts) in enumerate(answered_correctly))
         await send_embed(channel, f"Correct answer: **{current_answer.title()}**\n\n{results}", title="✅ Results")
+
 
 async def end_round(channel, guild):
     global game_active, leaderboard_data
@@ -182,6 +160,7 @@ async def end_round(channel, guild):
 
     await start_new_round(guild)
 
+
 async def show_leaderboard(channel, round_over=False):
     if not leaderboard_data:
         await send_embed(channel, "Nobody has scored yet.", title="Leaderboard")
@@ -190,15 +169,18 @@ async def show_leaderboard(channel, round_over=False):
     lines = [f"**{i+1}. {name} ({score} points)**" for i, (name, score) in enumerate(sorted_scores)]
     await send_embed(channel, "\n".join(lines), title="🏆 Leaderboard 🏆")
 
+
 @bot.command()
 async def leaderboard(ctx):
     await show_leaderboard(ctx.channel)
+
 
 @bot.command()
 async def endquiz(ctx):
     global game_active
     game_active = False
     await ctx.send("🛑 Quiz ended manually.")
+
 
 @bot.event
 async def on_message(message):
@@ -223,6 +205,7 @@ async def on_message(message):
         points_awarded = [15, 10, 5][len(answered_correctly)]
         players[player] += points_awarded
         answered_correctly.append((player, points_awarded))
+
 
 load_dotenv()
 bot.run(os.getenv("DISCORD_TOKEN"))
