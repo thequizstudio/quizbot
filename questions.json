@@ -84,7 +84,7 @@
   { "question": "AMERICAN FOOTBALL 🏈\n\n Which NFL team has the nickname Seahawks?", "answer": "Seattle" },
   { "question": "AMERICAN FOOTBALL 🏈\n\n Which NFL team has the nickname Ravens?", "answer": "Baltimore" },
   { "question": "AMERICAN FOOTBALL 🏈\n\n Which NFL team has the nickname Jaguars?", "answer": "Jacksonville" },
-  { "question": "AMERICAN FOOTBALL 🏈\n\n What is the nickname of the Denver American football team?", "answer": "Broncos" },
+  { "question": "AMERICAN FOOTBALL 🏈\n\n What is the nickname of the Denver NFL team?", "answer": "Broncos" },
   { "question": "AMERICAN FOOTBALL 🏈\n\n What is the nickname of the Green Bay NFL team?", "answer": "Packers" },
   { "question": "AMERICAN FOOTBALL 🏈\n\n What is the nickname of the Pittsburgh NFL team?", "answer": "Steelers" },
   { "question": "AMERICAN FOOTBALL 🏈\n\n What is the nickname of the Cincinnati NFL team?", "answer": "Bengals" },
@@ -127,6 +127,13 @@
   { "question": "CHEMISTRY 🧪\n\n What is the pH of pure water?", "answer": "7" },
   { "question": "CHEMISTRY 🧪\n\n What is the only metal that is liquid at room temperature?", "answer": "Mercury" },
 
+{ "question": "COMICS 🦸\n\n Which metal is bonded to Wolverine's skeleton?", "answer": "Adamantium" },
+{ "question": "COMICS 🦸\n\n Who created the Marvel characters Spider-Man and the X-Men?", "answer": "Stan Lee" },
+{ "question": "COMICS 🦸\n\n Which DC superhero can run at superhuman speed?", "answer": "Flash" },
+{ "question": "COMICS 🦸\n\n What is the name of Superman's home planet?", "answer": "Krypton" },
+{ "question": "COMICS 🦸\n\n Which Batman villain is also known as Oswald Cobblepot?", "answer": "Penguin" },
+{ "question": "COMICS 🦸\n\n Which comic book series introduced the character Rorschach?", "answer": "Watchmen" },
+
   { "question": "MOVIES 🎬\n\n In 'The Godfather', which five-letter word is suprisingly absent from the film's script?", "answer": "Mafia" },
   { "question": "MOVIES 🎬\n\n Who directed 'Jurassic Park'?", "answer": "Spielberg" },
   { "question": "MOVIES 🎬\n\n Who directed the 2019 film 'Once Upon a Time in Hollywood'?", "answer": "Tarantino" },
@@ -153,21 +160,48 @@
 { "question": "CURRENCY 💰\n\n What is the currency of Norway?", "answer": "Krone" },
 { "question": "CURRENCY 💰\n\n What is the currency of Thailand?", "answer": "Baht" },
 
-  { "question": "ENTERTAINMENT 🎬\n\n What is the name of the fictional country in 'Black Panther'?", "answer": "Wakanda" },
+{ "question": "ENTERTAINMENT 🎬\n\n What is the name of the fictional country in 'Black Panther'?", "answer": "Wakanda" },
 
-  { "question": "GEOGRAPHY 🌎\n\n What is the highest mountain in Africa?", "answer": "Kilimanjaro" },
+{ "question": "FLAGS 🚩\n\n Which African country's flag features a single five-pointed green star on a red background?", "answer": "Morocco" },
+{ "question": "FLAGS 🚩\n\n Which Scandinavian country has a blue flag with a yellow cross?", "answer": "Sweden" },
+{ "question": "FLAGS 🚩\n\n Which Middle Eastern country’s flag features a cedar tree?", "answer": "Lebanon" },
+{ "question": "FLAGS 🚩\n\n Which Caribbean nation’s flag features a black trident?", "answer": "Barbados" },
+{ "question": "FLAGS 🚩\n\n Which Asian country’s flag has a red background with five yellow stars?", "answer": "China" },
+{ "question": "FLAGS 🚩\n\n What is the only flag that does not have four sides?", "answer": "Nepal" },
+{ "question": "FLAGS 🚩\n\n The flag of which U.S. state contains a representation of the British 'Union Jack'?", "answer": "Hawaii" },
+    
+{ "question": "FOOD 🍕\n\n Manchego cheese originates from which country?", "answer": "Spain" },
+{ "question": "FOOD 🍕\n\n In Japanese cuisine, what name is given to a salty paste made from fermented soybeans?", "answer": "Miso" },
+{ "question": "FOOD 🍕\n\n Which fruit is dried to make prunes?", "answer": "Plums" },
+{ "question": "FOOD 🍕\n\n The Italian name of which pasta shape translates to 'little worms'?", "answer": "Vermicelli" },
+{ "question": "FOOD 🍕\n\n Which spice is harvested from the crocus plant?", "answer": "Saffron" },
+{ "question": "FOOD 🍕\n\n In which country did the dish 'ceviche' originate?", "answer": "Peru" },
+{ "question": "FOOD 🍕\n\n Which bean is used to make traditional baked beans?", "answer": "Haricot" },
+{ "question": "FOOD 🍕\n\n Which fruit has varieties called Cavendish, Lady Finger, and Red?", "answer": "Banana" },
+{ "question": "FOOD 🍕\n\n Edam cheese originates from which country?", "answer": "Netherlands" },
+{ "question": "FOOD 🍕\n\n What is the main ingredient in hummus?", "answer": "Chickpea" },
+{ "question": "FOOD 🍕\n\n Which Japanese dish consists of raw fish sliced thinly without rice?", "answer": "Sashimi" },
+{ "question": "FOOD 🍕\n\n What type of nut is used to make marzipan?", "answer": "Almond" },
+{ "question": "FOOD 🍕\n\n Which fruit is the base ingredient of guacamole?", "answer": "Avocado" },
+{ "question": "FOOD 🍕\n\n Which fruit is used to produce the drink calvados?", "answer": "Apple" },
+{ "question": "FOOD 🍕\n\n What type of pastry is traditionally used for éclairs?", "answer": "Choux" },
+{ "question": "FOOD 🍕\n\n What is the Japanese word for seaweed sheets used in sushi?", "answer": "Nori" },
+{ "question": "FOOD 🍕\n\n Halloumi cheese is traditionally associated with which island?", "answer": "Cyprus" },
+{ "question": "FOOD 🍕\n\n What is the Italian culinary term for finely chopped herbs mixed with garlic and lemon zest?", "answer": "Gremolata" },
+{ "question": "FOOD 🍕\n\n Which nut is the key ingredient in Nutella?", "answer": "Hazelnut" },
+{ "question": "FOOD 🍕\n\n Which Italian dessert literally translates to 'pick me up'?", "answer": "Tiramisu" },
+
   { "question": "GEOGRAPHY 🌎\n\n What is the largest island in the world?", "answer": "Greenland" },
   { "question": "GEOGRAPHY 🌎\n\n What is the only landlocked country in South America?", "answer": "Paraguay" },
   { "question": "GEOGRAPHY 🌎\n\n Which country has the most time zones?", "answer": "France" },
   { "question": "GEOGRAPHY 🌎\n\n Which country has a city named 'Dizzy', a reference to jazz legend Dizzy Gillespie?", "answer": "Cuba" },
   { "question": "GEOGRAPHY 🌍\n\n Which country has the most volcanoes?", "answer": "Indonesia" },
-  { "question": "GEOGRAPHY 🌍\n\n What is the only flag that does not have four sides?", "answer": "Nepal" },
   { "question": "GEOGRAPHY 🌏\n\n What is the longest mountain range in the world?", "answer": "Andes" },
   { "question": "GEOGRAPHY 🌏\n\n What country has the most islands?", "answer": "Sweden" },
 
-  { "question": "ICE HOCKEY 🏒\n\n What is the nickname of the Carolina NHL team?", "answer": "Hurricanes" },
-  { "question": "ICE HOCKEY 🏒\n\n What is the nickname of the Calgary NHL team?", "answer": "Flames" },
-  { "question": "ICE HOCKEY 🏒\n\n What is the nickname of the Colorado NHL team?", "answer": "Avalanche" },
+{ "question": "ICE HOCKEY 🏒\n\n What is the nickname of the Carolina NHL team?", "answer": "Hurricanes" },
+{ "question": "ICE HOCKEY 🏒\n\n What is the nickname of the Calgary NHL team?", "answer": "Flames" },
+{ "question": "ICE HOCKEY 🏒\n\n What is the nickname of the Colorado NHL team?", "answer": "Avalanche" },
 { "question": "ICE HOCKEY 🏒\n\n What is the nickname of the Boston NHL team?", "answer": "Bruins" },
 { "question": "ICE HOCKEY 🏒\n\n What is the nickname of the Chicago NHL team?", "answer": "Blackhawks" },
 { "question": "ICE HOCKEY 🏒\n\n What is the nickname of the Edmonton NHL team?", "answer": "Oilers" },
@@ -199,7 +233,7 @@
   { "question": "MUSIC 🎵\n\n Which pop star released the album 'Lemonade' in 2016?", "answer": "Beyonce" },
   { "question": "MUSIC 🎵\n\n What artist is known for the song 'Hips Don't Lie'?", "answer": "Shakira" },
   { "question": "MUSIC 🎵\n\n What band had hits like 'Lithium' and 'Heart-Shaped Box'?", "answer": "Nirvana" },
-  { "question": "MUSIC 🎵\n\n Who is known for the songs 'When Doves Cry' and 'Kiss'?", "answer": "Prince" },
+  { "question": "MUSIC 🎵\n\n Who is known for the songs 'When Doves Cry' and 'Raspberry Beret'?", "answer": "Prince" },
     
   { "question": "NAME THE ARTIST 🎤\n\n Name the artist from these songs: Cheap Thrills, The Greatest, Elastic Heart.", "answer": "Sia" },
   { "question": "NAME THE ARTIST 🎤\n\n Name the artist from these songs: Supermassive Black Hole, Hysteria, Uprising.", "answer": "Muse" },
@@ -220,8 +254,6 @@
   { "question": "NAME THE ARTIST 🎤\n\n Name the artist from these songs: Always, Bad Medicine, Keep The Faith.", "answer": "Bon Jovi" },
   { "question": "NAME THE ARTIST 🎤\n\n Name the artist from these songs: Edge of Glory, Bad Romance, Just Dance.", "answer": "Lady Gaga" },
     
-    
-    
   { "question": "OSCARS 🎬\n\n What film starring Mikey Madison won the Oscar for Best Picture in 2025?", "answer": "Anora" },
   { "question": "OSCARS 🎬\n\n Which James Cameron film won the Oscar for Best Picture in 1998?", "answer": "Titanic" },
 
@@ -229,6 +261,7 @@
   { "question": "PHILOSOPHY 🧠\n\n Who wrote 'Critique of Pure Reason'?", "answer": "Kant" },
 
   { "question": "PHYSICS ⚛️\n\n What is the SI unit of force?", "answer": "Newton" },
+  { "question": "PHYSICS ⚛️\n\n What is the SI unit of pressure?", "answer": "Pascal" },
   { "question": "PHYSICS ⚛️\n\n What is the SI unit of energy/work?", "answer": "Joule" },
   { "question": "PHYSICS ⚛️\n\n What particle carries a negative electric charge?", "answer": "Electron" },
   { "question": "PHYSICS ⚛️\n\n What is the SI unit of electric current?", "answer": "Ampere" },
@@ -245,6 +278,11 @@
 
   { "question": "SOCCER ⚽\n\n In which year did the first football World Cup take place?", "answer": "1930" },
   { "question": "SOCCER ⚽\n\n What is the nickname of Newcastle United FC?", "answer": "Magpies" },
+  { "question": "SOCCER ⚽\n\n Who hosted (and won) the 1998 FIFA World Cup?", "answer": "France" },
+  { "question": "SOCCER ⚽\n\n Gareth Bale represented which country in international tournaments?", "answer": "Wales" },
+  { "question": "SOCCER ⚽\n\n Which English football plays their home games at Stamford Bridge?", "answer": "Chelsea" },
+  { "question": "SOCCER ⚽\n\n Lionel Messi spent the majority of his playing career at which European club?", "answer": "Barcelona" },
+  { "question": "SOCCER ⚽\n\n Who hosted the FIFA World Cup for the first time in 2022?", "answer": "Qatar" },
   { "question": "SOCCER ⚽\n\n Who hosted (and won) the 1998 FIFA World Cup?", "answer": "France" },
 
   { "question": "SPACE 🌌\n\n Which planet in the solar system has the most moons?", "answer": "Jupiter" },
@@ -321,7 +359,7 @@
   { "question": "HISTORY 🕰️\n\n What was the name of the ship on which the Pilgrims traveled to America?", "answer": "Mayflower" },
   { "question": "HISTORY 🕰️\n\n Who invented the printing press?", "answer": "Gutenberg" },
   { "question": "HISTORY 🕰️\n\n What was the main language of the Roman Empire?", "answer": "Latin" },
-  { "question": "HISTORY ⏳\n\n What was the first man-made object to orbit Earth?", "answer": "Sputnik" },
+  { "question": "HISTORY 🕰️\n\n What was the first man-made object to orbit Earth?", "answer": "Sputnik" },
   { "question": "HISTORY 🕰️\n\n In which year did World War II end?", "answer": "1945" },
   { "question": "HISTORY 🕰️\n\n Who was the second President of the United States?", "answer": "Adams" },
   { "question": "HISTORY 🕰️\n\n What year did the Titanic sink?", "answer": "1912" },
@@ -360,9 +398,15 @@
 { "question": "ANIMALS 🐶\n\n Which ant-eating mammal resembles a fox but belongs to the hyena family?", "answer": "Aardwolf" },
 { "question": "ANIMALS 🐶\n\n Which dog was sent into space by the Soviet Union in 1957, becoming the first animal to orbit the Earth?", "answer": "Laika" },
 { "question": "ANIMALS 🐶\n\n Dalmatians originated in the region of Dalmatia in which European country?", "answer": "Croatia" },
-{ "question": "ANIMALS 🐶\n\n What is the fastest land animal?", "answer": "Cheetah" },
-{ "question": "ANIMALS 🐶\n\n What mammal lays eggs?", "answer": "Platypus" },
-{ "question": "ANIMALS 🐶\n\n What is the largest species of shark?", "answer": "Whale shark" },
-{ "question": "ANIMALS 🐶\n\n Which German dog breed is often referred to as a 'sausage dog'?", "answer": "Daschund" }
+{ "question": "ANIMALS 🐶\n\n Which German dog breed is often referred to as a 'sausage dog'?", "answer": "Daschund" },
+{ "question": "ANIMALS 🐶\n\n What desert fox is known for its oversized ears?", "answer": "Fennec" },
+
+{ "question": "FLOWERS 🌸\n\n What flower is traditionally worn on Remembrance Day in the United Kingdom?", "answer": "Poppy" },
+{ "question": "FLOWERS 🌸\n\n Which flowering plant is the main source of vanilla?", "answer": "Orchid" },
+{ "question": "FLOWERS 🌸\n\n Which flower is the national emblem of France?", "answer": "Iris" },
+{ "question": "FLOWERS 🌸\n\n Which flower is a national symbol of Wales and known for its trumpet-shaped bloom?", "answer": "Daffodil" },
+{ "question": "FLOWERS 🌸\n\n What is the national flower of India?", "answer": "Lotus" },
+{ "question": "FLOWERS 🌸\n\n Which alpine flower is known for growing in high mountain ranges and symbolizes courage?", "answer": "Edelweiss" },
+
 
 ]
