@@ -170,10 +170,10 @@
 { "question": "ICE HOCKEY 🏒\n\n What is the nickname of the Edmonton NHL team?", "answer": "Oilers" },
 { "question": "ICE HOCKEY 🏒\n\n What is the nickname of the New York NHL team based in Manhattan?", "answer": "Rangers" },
 
-  { "question": "LITERATURE 📖\n\n What is the name of the fictional wizard school in 'Harry Potter'?", "answer": "Hogwarts" },
+  { "question": "LITERATURE 📚\n\n What is the name of the fictional wizard school in 'Harry Potter'?", "answer": "Hogwarts" },
   { "question": "LITERATURE 📚\n\n What was the title of Stephen King's first novel?", "answer": "Carrie" },
   { "question": "LITERATURE 📚\n\n Who wrote 'The Master and Margarita'?", "answer": "Bulgakov" },
-  { "question": "LITERATURE 🎭\n\n Complete the Shakespeare play: Timon of _____", "answer": "Athens" },
+  { "question": "LITERATURE 📚\n\n Complete the Shakespeare play: Timon of _____", "answer": "Athens" },
   { "question": "LITERATURE 📚\n\n Who wrote the epic poem 'Paradise Lost'?", "answer": "Milton" },
 
   { "question": "MYTHOLOGY 🐉\n\n Who was the Greek god of the sea?", "answer": "Poseidon" },
@@ -234,8 +234,8 @@
   { "question": "SPORTS 🏆\n\n What is the maximum break in snooker?", "answer": "147" },
   { "question": "SPORTS 🏆\n\n What is the only sport to have been played on the Moon?", "answer": "Golf" },
 
-  { "question": "TECHNOLOGY 🛠️\n\n What is the name of the computer programming language developed by Sun Microsystems?", "answer": "Java" },
-  { "question": "TECHNOLOGY 🛠️\n\n What term refers to the process of converting data into a secure format?", "answer": "Encryption" },
+  { "question": "TECHNOLOGY 💻\n\n What is the name of the computer programming language developed by Sun Microsystems?", "answer": "Java" },
+  { "question": "TECHNOLOGY 💻\n\n What term refers to the process of converting data into a secure format?", "answer": "Encryption" },
 
   { "question": "TELEVISION 📺\n\n What is the name of the fictional town where 'Stranger Things' is set?", "answer": "Hawkins" },
   { "question": "TELEVISION 📺\n\n In 'Friends', what is the first name of Ross’s second wife?", "answer": "Emily" },
@@ -300,9 +300,9 @@
 { "question": "ANIMALS 🐶\n\n Which ant-eating mammal resembles a fox but belongs to the hyena family?", "answer": "Aardwolf" },
 { "question": "ANIMALS 🐶\n\n Which dog was sent into space by the Soviet Union in 1957, becoming the first animal to orbit the Earth?", "answer": "Laika" },
 { "question": "ANIMALS 🐶\n\n Dalmatians originated in the region of Dalmatia in which European country?", "answer": "Croatia" },
-{ "question": "ANIMALS 🐾\n\n What is the fastest land animal?", "answer": "Cheetah" },
-{ "question": "ANIMALS 🐾\n\n What mammal lays eggs?", "answer": "Platypus" },
-{ "question": "ANIMALS 🐾\n\n What is the largest species of shark?", "answer": "Whale shark" },
+{ "question": "ANIMALS 🐶\n\n What is the fastest land animal?", "answer": "Cheetah" },
+{ "question": "ANIMALS 🐶\n\n What mammal lays eggs?", "answer": "Platypus" },
+{ "question": "ANIMALS 🐶\n\n What is the largest species of shark?", "answer": "Whale shark" },
 { "question": "ANIMALS 🐶\n\n Which German dog breed is often referred to as a 'sausage dog'?", "answer": "Daschund" }
 
 ]
