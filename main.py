@@ -195,6 +195,11 @@ async def on_message(message):
         answered_this_round.add(message.author.id)
         player = message.author.display_name
         points_awarded = [15, 10, 5][len(answered_correctly)]
+
+        # FIX: Add new player dynamically if missing
+        if player not in players:
+            players[player] = 0
+
         players[player] += points_awarded
         answered_correctly.append((player, points_awarded))
 
