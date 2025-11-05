@@ -17,7 +17,6 @@ def load_questions():
 
 questions = load_questions()
 
-# Emoticon mapping by category name lowercase
 CATEGORY_EMOJIS = {
     "geography": "🌐",
     "art": "🎨",
@@ -41,19 +40,17 @@ CATEGORY_EMOJIS = {
     "sports": "🏅",
     "entertainment": "🎬",
     "books": "📚",
-    # Add more as needed
 }
 
 current_question = None
-current_answer = None  # fix: no .title() here
-players = {}  # current round scores
+current_answer = None
+players = {}
 game_active = False
 current_round_questions = []
-current_question_index = 0
-answered_correctly = []  # list of (player, points)
+answered_correctly = []
 answered_this_round = set()
 quiz_channel_id = None
-NUMBER_OF_QUESTIONS_PER_ROUND = 3
+NUMBER_OF_QUESTIONS_PER_ROUND = 10
 DELAY_BETWEEN_ROUNDS = 30
 accepting_answers = False
 
@@ -66,22 +63,14 @@ def load_leaderboard():
         try:
             with open(LEADERBOARD_FILE, "r") as f:
                 data = json.load(f)
-                if not isinstance(data, dict):
-                    print("Leaderboard file malformed, resetting.")
-                    return {}
-                return data
-        except Exception as e:
-            print(f"Error reading leaderboard file: {e}")
+                return data if isinstance(data, dict) else {}
+        except:
             return {}
     return {}
 
 def save_leaderboard(data):
-    try:
-        with open(LEADERBOARD_FILE, "w") as f:
-            json.dump(data, f, indent=2)
-        print("Leaderboard saved successfully.")
-    except Exception as e:
-        print(f"Error saving leaderboard: {e}")
+    with open(LEADERBOARD_FILE, "w") as f:
+        json.dump(data, f, indent=2)
 
 leaderboard_data = load_leaderboard()
 
@@ -112,146 +101,94 @@ def get_round_categories(questions_list):
 
 @bot.event
 async def on_ready():
-    print(f"Bot connected as {bot.user}!")
     global quiz_channel_id
-    while not bot.guilds:
-        print("Waiting for guilds...")
-        await asyncio.sleep(1)
+    print(f"Bot connected as {bot.user}!")
+
     guild = bot.guilds[0]
-    print(f"Connected to guild: {guild.name} ({guild.id})")
 
     for channel in guild.text_channels:
         perms = channel.permissions_for(guild.me)
-        print(f"Checking channel: {channel.name} ({channel.id}), send_messages={perms.send_messages}, read_messages={perms.read_messages}")
         if perms.send_messages and perms.read_messages:
             quiz_channel_id = channel.id
-            print(f"Quiz will run in channel: {channel.name}")
             await start_new_round(guild)
             return
-    print("No suitable channel found to run the quiz.")
 
 async def start_new_round(guild):
-    global game_active, players, answered_this_round, current_question_index, current_round_questions, accepting_answers, answered_correctly
+    global game_active, players, answered_correctly, answered_this_round, current_round_questions, accepting_answers
 
     if game_active:
-        print("Quiz already running; ignoring new round request.")
         return
 
-    print("Starting new round...")
     game_active = True
-    players.clear()
-    answered_this_round.clear()
-    current_question_index = 0
-    current_round_questions = random.sample(questions, min(NUMBER_OF_QUESTIONS_PER_ROUND, len(questions)))
-    accepting_answers = False
+    players = {m.display_name: 0 for m in guild.members if not m.bot}
     answered_correctly = []
+    answered_this_round = set()
+    accepting_answers = False
 
-    for member in guild.members:
-        if not member.bot:
-            players[member.display_name] = 0
+    current_round_questions = random.sample(questions, min(NUMBER_OF_QUESTIONS_PER_ROUND, len(questions)))
 
     channel = bot.get_channel(quiz_channel_id)
-    if channel:
-        categories = get_round_categories(current_round_questions)
-        categories_text = "\n".join(categories)
-        await send_embed(channel, f"{categories_text}", title="🎯 Next Round Preview")
+    categories = get_round_categories(current_round_questions)
+    await send_embed(channel, "\n".join(categories), title="🎯 Next Round Preview")
+    await send_embed(channel, f"New round starting! {len(current_round_questions)} questions! 🎉", title="🎲 Quiz Starting")
+    await asyncio.sleep(7)
 
-        await send_embed(channel, f"New quiz round starting! {len(current_round_questions)} questions ahead! 🎉", title="🎲 Quiz Starting")
+    for index, q in enumerate(current_round_questions, start=1):
+        await ask_single_question(channel, index, q)
         await asyncio.sleep(7)
-        await ask_next_question(channel)
-    else:
-        print("Quiz channel not found!")
-        game_active = False
 
-async def ask_next_question(channel):
-    global current_question, current_answer, current_question_index, answered_correctly, game_active, answered_this_round, accepting_answers
+    await end_round(channel, guild)
 
-    if not game_active:
-        return
+async def ask_single_question(channel, index, q):
+    global current_question, current_answer, answered_correctly, answered_this_round, accepting_answers, players
 
-    if current_question_index >= len(current_round_questions):
-        game_active = False
-
-        if players:
-            max_score = max(players.values())
-            winners = [player for player, score in players.items() if score == max_score]
-            winners_text = ", ".join(winners)
-            # Updated winner message with points
-            await send_embed(channel, f"And the winner is {winners_text} with {max_score} points!", title="🏁 Round Over!")
-        else:
-            await send_embed(channel, "No winners this round.", title="🏁 Round Over!")
-
-        print("Round over, showing leaderboard...")
-        await show_leaderboard(channel, round_over=True)
-        await send_embed(channel, f"Next round starting in {DELAY_BETWEEN_ROUNDS} seconds... Get ready!", title="⏳ Waiting")
-
-        await asyncio.sleep(DELAY_BETWEEN_ROUNDS)
-
-        for guild in bot.guilds:
-            if guild.get_channel(channel.id):
-                await start_new_round(guild)
-                return
-        await send_embed(channel, "⚠️ Could not find guild for quiz channel to start next round.", title="⚠️ Error")
-        return
-
-    q = current_round_questions[current_question_index]
     current_question = q["question"]
     current_answer = q["answer"].lower()
     answered_correctly = []
     answered_this_round = set()
     accepting_answers = True
 
-    current_question_index += 1
+    await send_embed(channel, f"**Question {index}:**\n{current_question}")
 
-    perms = channel.permissions_for(channel.guild.me)
-    print(f"Permissions in #{channel.name}: send_messages={perms.send_messages}, view_channel={perms.view_channel}")
+    await asyncio.sleep(10)
+    accepting_answers = False
 
-    await send_embed(channel, f"**Question {current_question_index}:**\n{current_question}")
+    if not answered_correctly:
+        await send_embed(channel, f"No one got it! Correct answer: **{current_answer.title()}**", title="⏰ Time's Up!")
+    else:
+        results = "\n".join(f"{i+1}. {p} (+{pts} pts)" for i, (p, pts) in enumerate(answered_correctly))
+        await send_embed(channel, f"Correct answer: **{current_answer.title()}**\n\n{results}", title="✅ Results")
 
-    try:
-        await asyncio.sleep(10)
-        accepting_answers = False
+async def end_round(channel, guild):
+    global game_active, leaderboard_data
 
-        if not answered_correctly:
-            await send_embed(channel, f"No one answered correctly. The answer was: **{current_answer.title()}**", title="⏰ Time's Up!")
-        else:
-            lines = []
-            for i, (player, pts) in enumerate(answered_correctly, start=1):
-                lines.append(f"{i}. {player} (+{pts} points)")
-            winners_text = "\n".join(lines)
-            await send_embed(
-                channel,
-                f"The correct answer was: **{current_answer.title()}**\n\n🏅 Scores:\n{winners_text}",
-                title="⏰ Time's Up!"
-            )
+    game_active = False
 
-        await asyncio.sleep(7)
-        if game_active:
-            await ask_next_question(channel)
-    except Exception as e:
-        print(f"Error during question timing: {e}")
+    max_score = max(players.values()) if players else 0
+    winners = [p for p, s in players.items() if s == max_score] if max_score > 0 else []
+
+    if winners:
+        await send_embed(channel, f"Winner: {', '.join(winners)} ({max_score} points)", title="🏁 Round Over!")
+    else:
+        await send_embed(channel, "No winners this round.", title="🏁 Round Over!")
+
+    for player, score in players.items():
+        leaderboard_data[player] = leaderboard_data.get(player, 0) + score
+    save_leaderboard(leaderboard_data)
+
+    await show_leaderboard(channel)
+    await send_embed(channel, f"Next round starts in {DELAY_BETWEEN_ROUNDS} seconds…", title="⏳ Waiting")
+    await asyncio.sleep(DELAY_BETWEEN_ROUNDS)
+
+    await start_new_round(guild)
 
 async def show_leaderboard(channel, round_over=False):
-    global leaderboard_data
-
-    if round_over:
-        try:
-            for player, score in players.items():
-                leaderboard_data[player] = leaderboard_data.get(player, 0) + score
-            save_leaderboard(leaderboard_data)
-        except Exception as e:
-            print(f"Error updating leaderboard: {e}")
-
     if not leaderboard_data:
-        await send_embed(channel, "Nobody scored anything so far! 💀", title="Leaderboard")
+        await send_embed(channel, "Nobody has scored yet.", title="Leaderboard")
         return
-
     sorted_scores = sorted(leaderboard_data.items(), key=lambda x: x[1], reverse=True)
-    # Name and points on same line, bold entire line:
     lines = [f"**{i+1}. {name} ({score} points)**" for i, (name, score) in enumerate(sorted_scores)]
-
-    title = "🏆 Daily Leaderboard 🏆"
-    await send_embed(channel, "\n".join(lines), title=title)
+    await send_embed(channel, "\n".join(lines), title="🏆 Leaderboard 🏆")
 
 @bot.command()
 async def leaderboard(ctx):
@@ -260,44 +197,32 @@ async def leaderboard(ctx):
 @bot.command()
 async def endquiz(ctx):
     global game_active
-    if not game_active:
-        await ctx.send("No quiz is running.")
-        return
     game_active = False
-    await ctx.send("🛑 Quiz ended.")
+    await ctx.send("🛑 Quiz ended manually.")
 
 @bot.event
 async def on_message(message):
-    global current_question, current_answer, answered_correctly, game_active, answered_this_round, accepting_answers
+    global answered_correctly, accepting_answers, players
 
     await bot.process_commands(message)
 
     if (
         message.author.bot
         or not game_active
-        or not current_question
-        or message.channel.id != quiz_channel_id
         or not accepting_answers
+        or message.channel.id != quiz_channel_id
     ):
         return
 
-    user_answer = message.content.strip()
-    match_score = fuzz.ratio(user_answer.lower(), current_answer)
+    user_answer = message.content.strip().lower()
+    match_score = fuzz.ratio(user_answer, current_answer)
 
-    if (
-        match_score >= 85
-        and message.author.id not in answered_this_round
-        and len(answered_correctly) < 3
-    ):
+    if match_score >= 85 and message.author.id not in answered_this_round and len(answered_correctly) < 3:
         answered_this_round.add(message.author.id)
         player = message.author.display_name
         points_awarded = [15, 10, 5][len(answered_correctly)]
-        players[player] = players.get(player, 0) + points_awarded
+        players[player] += points_awarded
         answered_correctly.append((player, points_awarded))
-        return
-
-    if game_active and message.author.display_name not in players and not message.author.bot:
-        players[message.author.display_name] = players.get(message.author.display_name, 0)
 
 load_dotenv()
 bot.run(os.getenv("DISCORD_TOKEN"))
