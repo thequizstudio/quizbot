@@ -128,6 +128,13 @@ async def ask_single_question(channel, index, q):
         results = "\n".join(f"{i+1}. {p} (+{pts} pts)" for i, (p, pts) in enumerate(answered_correctly))
         await send_embed(channel, f"Correct answer: **{current_answer.title()}**\n\n{results}", title="✅ Results")
 
+        # NEW: Show round scores after results
+        # Sort players by current round points descending
+        sorted_round_scores = sorted(players.items(), key=lambda x: x[1], reverse=True)
+        round_scores_lines = [f"{i+1}. {name} (+{score})" for i, (name, score) in enumerate(sorted_round_scores)]
+        await send_embed(channel, "\n".join(round_scores_lines), title="📊 Round Scores")
+
+
 
 async def end_round(channel, guild):
     global game_active, leaderboard_data
@@ -196,7 +203,6 @@ async def on_message(message):
         player = message.author.display_name
         points_awarded = [15, 10, 5][len(answered_correctly)]
 
-        # FIX: Add new player dynamically if missing
         if player not in players:
             players[player] = 0
 
