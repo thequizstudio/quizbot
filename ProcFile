@@ -1,2 +1,1 @@
-quiz: python quiz_bot/main.py
-music: python music/main.py
+web: python main.py
