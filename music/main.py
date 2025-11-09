@@ -6,13 +6,12 @@ import os
 from rapidfuzz import fuzz
 from spotify_utils import SpotifyAPI
 
-# No dotenv load here, since env vars come from Railway automatically
+# Removed load_dotenv()
 
-# Grab secrets directly from environment variables set in Railway
 TOKEN = os.getenv("MUSIC_DISCORD_TOKEN")
 MUSIC_TEXT_CHANNEL = int(os.getenv("MUSIC_TEXT_CHANNEL"))
 MUSIC_VOICE_CHANNEL = int(os.getenv("MUSIC_VOICE_CHANNEL"))
-SPOTIFY_PLAYLIST_ID = os.getenv("SPOTIFY_PLAYLIST_ID")  # Note: key name must match your Railway env var
+SPOTIFY_PLAYLIST_ID = os.getenv("SPOTIFY_PLAYLIST_ID")  # Just the playlist ID, not full URL
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
