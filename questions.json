@@ -333,8 +333,6 @@
 { "question": "MATH 📐\n\n What is 3² × 2?", "answer": "18" },
 { "question": "MATH 📐\n\n What is the cube root of 27?", "answer": "3" },
 { "question": "MATH 📐\n\n What is 90 ÷ 6?", "answer": "15" },
-{ "question": "MATH 📐\n\n What is 32 − 17?", "answer": "15" },
-{ "question": "MATH 📐\n\n What is 3/5 of 50?", "answer": "30" },
 { "question": "MATH 📐\n\n What is the square root of 196?", "answer": "14" },
 { "question": "MATH 📐\n\n What is 8 × 9?", "answer": "72" },
 { "question": "MATH 📐\n\n What is 600 ÷ 25?", "answer": "24" },
@@ -406,7 +404,5 @@
 { "question": "FLOWERS 🌸\n\n Which flower is the national emblem of France?", "answer": "Iris" },
 { "question": "FLOWERS 🌸\n\n Which flower is a national symbol of Wales and known for its trumpet-shaped bloom?", "answer": "Daffodil" },
 { "question": "FLOWERS 🌸\n\n What is the national flower of India?", "answer": "Lotus" },
-{ "question": "FLOWERS 🌸\n\n Which alpine flower is known for growing in high mountain ranges and symbolizes courage?", "answer": "Edelweiss" },
-
-
+{ "question": "FLOWERS 🌸\n\n Which alpine flower is known for growing in high mountain ranges and symbolizes courage?", "answer": "Edelweiss" }
 ]
