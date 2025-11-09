@@ -12,7 +12,7 @@ load_dotenv()
 TOKEN = os.getenv("MUSIC_DISCORD_TOKEN")
 MUSIC_TEXT_CHANNEL = int(os.getenv("MUSIC_TEXT_CHANNEL"))
 MUSIC_VOICE_CHANNEL = int(os.getenv("MUSIC_VOICE_CHANNEL"))
-SPOTIFY_PLAYLIST_ID = os.getenv("SPOTIFY_PLAYLIST_ID")  # Spotify playlist ID (not full URL)
+SPOTIFY_PLAYLIST_ID = os.getenv("1pr1jVrSxJMKH6w2aVvWtx")  # Spotify playlist ID (not full URL)
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
