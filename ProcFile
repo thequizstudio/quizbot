@@ -1,2 +1,2 @@
-quiz: python main.py
+web: python main.py
 music: python music/main.py
