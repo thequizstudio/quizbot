@@ -1,0 +1,20 @@
+[
+  {
+    "artist": "The Weeknd",
+    "title": "Blinding Lights",
+    "preview_url": "https://p.scdn.co/mp3-preview/6f1d8a8b2c4b1234...",
+    "answer": "Blinding Lights"
+  },
+  {
+    "artist": "Queen",
+    "title": "Bohemian Rhapsody",
+    "preview_url": "https://p.scdn.co/mp3-preview/90b1cfa53d0b5678...",
+    "answer": "Bohemian Rhapsody"
+  },
+  {
+    "artist": "Adele",
+    "title": "Hello",
+    "preview_url": "https://p.scdn.co/mp3-preview/f1a19d0f24b9abcd...",
+    "answer": "Hello"
+  }
+]
