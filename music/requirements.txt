@@ -3,3 +3,4 @@ ffmpeg-python
 python-dotenv
 aiohttp
 rapidfuzz
+spotipy
