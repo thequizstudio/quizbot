@@ -145,7 +145,8 @@ async def manual_start(ctx):
     await ctx.send("🎧 Starting a new music trivia round!")
     await start_music_round()
 
-
-bot.run(TOKEN)
-
 print("Token:", TOKEN)
+if not TOKEN:
+    print("ERROR: MUSIC_DISCORD_TOKEN is not set or is empty!")
+    exit(1)
+bot.run(TOKEN)
