@@ -147,3 +147,5 @@ async def manual_start(ctx):
 
 
 bot.run(TOKEN)
+
+print("Token:", TOKEN)
