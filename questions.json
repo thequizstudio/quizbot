@@ -333,8 +333,6 @@
 { "question": "MATH 📐\n\n What is 3² × 2?", "answer": "18" },
 { "question": "MATH 📐\n\n What is the cube root of 27?", "answer": "3" },
 { "question": "MATH 📐\n\n What is 90 ÷ 6?", "answer": "15" },
-{ "question": "MATH 📐\n\n What is 32 − 17?", "answer": "15" },
-{ "question": "MATH 📐\n\n What is 3/5 of 50?", "answer": "30" },
 { "question": "MATH 📐\n\n What is the square root of 196?", "answer": "14" },
 { "question": "MATH 📐\n\n What is 8 × 9?", "answer": "72" },
 { "question": "MATH 📐\n\n What is 600 ÷ 25?", "answer": "24" },
@@ -342,8 +340,7 @@
 { "question": "MATH 📐\n\n What is the square root of 144?", "answer": "12" },
 { "question": "MATH 📐\n\n What is 15 × 12?", "answer": "180" },
 { "question": "MATH 📐\n\n What is the term for a triangle with all three sides of different lengths?", "answer": "Scalene" },
-    
-  { "question": "HISTORY 🕰️\n\n Which English king signed the Magna Carta in 1215?", "answer": "John" },
+  
   { "question": "HISTORY 🕰️\n\n What year did the French Revolution begin?", "answer": "1789" },
   { "question": "HISTORY 🕰️\n\n Who was the leader of the Soviet Union during World War II?", "answer": "Stalin" },
   { "question": "HISTORY 🕰️\n\n Which battle marked the end of Napoleon's rule?", "answer": "Waterloo" },
