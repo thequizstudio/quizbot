@@ -1,152 +1,336 @@
+from dotenv import load_dotenv
+import os
 import discord
 from discord.ext import commands
-import asyncio
+import json
 import random
-import os
+import asyncio
 from rapidfuzz import fuzz
-from spotify_utils import SpotifyAPI
+import yt_dlp
 
-# Removed load_dotenv()
+# ---------------- Config / Constants ----------------
+LEADERBOARD_FILE = "leaderboard.json"
+QUESTIONS_FILE = "music_questions.json"
+NUMBER_OF_QUESTIONS_PER_ROUND = 10
+DELAY_BETWEEN_ROUNDS = 30  # seconds between rounds
+ANSWER_TIMEOUT = 10  # seconds to answer each question
+PREVIEW_DURATION = 7  # seconds of audio to play
+FUZZ_THRESHOLD = 85  # rapidfuzz ratio threshold for accepting an answer
 
-TOKEN = os.getenv("MUSIC_DISCORD_TOKEN")
-MUSIC_TEXT_CHANNEL = int(os.getenv("MUSIC_TEXT_CHANNEL"))
-MUSIC_VOICE_CHANNEL = int(os.getenv("MUSIC_VOICE_CHANNEL"))
-SPOTIFY_PLAYLIST_ID = os.getenv("SPOTIFY_PLAYLIST_ID")  # Just the playlist ID, not full URL
+# ---------------- Helper: load questions ----------------
+def load_questions():
+    try:
+        with open(QUESTIONS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            print(f"Loaded {len(data)} music questions.")
+            return data
+    except FileNotFoundError:
+        print(f"❌ Error: {QUESTIONS_FILE} not found!")
+        return []
+    except json.JSONDecodeError:
+        print(f"❌ Error: {QUESTIONS_FILE} is not valid JSON!")
+        return []
 
-intents = discord.Intents.all()
+questions = load_questions()
+
+# ---------------- Leaderboard persistence ----------------
+def load_leaderboard():
+    if os.path.exists(LEADERBOARD_FILE):
+        try:
+            with open(LEADERBOARD_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return data if isinstance(data, dict) else {}
+        except:
+            return {}
+    return {}
+
+def save_leaderboard(data):
+    with open(LEADERBOARD_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+
+leaderboard_data = load_leaderboard()
+
+# ---------------- Discord bot setup ----------------
+intents = discord.Intents.default()
+intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-scores = {}
-current_song = None
-answer_found = False
-fastest_answered = False
+# runtime state
+current_question = None
+current_answer = None
+players = {}
+game_active = False
+current_round_questions = []
+answered_correctly = []
+answered_this_round = set()
+accepting_answers = False
 
-spotify = SpotifyAPI()  # Instantiate Spotify API helper
+# ---------------- Embed helper (stylistic uniformity) ----------------
+async def send_embed(channel, message, title=None, color=0x3498db):
+    embed = discord.Embed(description=message, color=color)
+    if title:
+        embed.title = title
+    await channel.send(embed=embed)
 
+# ---------------- Category helpers ----------------
+def get_category_from_question(question_text):
+    return question_text.split("\n")[0].strip()
 
-async def load_spotify_songs():
-    print(f"Fetching tracks from Spotify playlist {SPOTIFY_PLAYLIST_ID}...")
-    items = spotify.get_playlist_tracks(SPOTIFY_PLAYLIST_ID, limit=100)
-    tracks = []
-    for item in items:
-        track = item.get("track")
-        if not track:
-            continue
-        preview_url = track.get("preview_url")
-        if not preview_url:
-            continue  # skip tracks with no preview clip
+def get_round_categories(questions_list):
+    return [get_category_from_question(q["question"]) for q in questions_list]
 
-        tracks.append({
-            "artist": track["artists"][0]["name"],
-            "title": track["name"],
-            "preview_url": preview_url,
-            "answer": track["name"]
-        })
+# ---------------- yt-dlp audio fetch ----------------
+def get_audio_url(yt_url):
+    ydl_opts = {
+        "format": "bestaudio/best",
+        "quiet": True,
+        "skip_download": True,
+        "no_warnings": True
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(yt_url, download=False)
+        # info['url'] is the direct media url
+        return info.get("url")
 
-    print(f"Loaded {len(tracks)} previewable tracks from Spotify.")
-    return tracks
+# ---------------- audio playback ----------------
+async def play_preview(vc, audio_url, duration=PREVIEW_DURATION):
+    try:
+        source = discord.FFmpegPCMAudio(audio_url, before_options=f"-ss 0 -t {duration}", options="-vn")
+        vc.play(source)
+        while vc.is_playing():
+            await asyncio.sleep(0.5)
+    except Exception as e:
+        # raise to upper layer for consistent error handling
+        raise e
 
+# ---------------- Quiz flow (auto-start + rounds) ----------------
+async def start_new_round(guild):
+    """
+    Starts a new music quiz round using environment-configured text/voice channels.
+    This function both auto-starts on_ready and is called again after DELAY_BETWEEN_ROUNDS.
+    """
+    global game_active, players, answered_correctly, answered_this_round, current_round_questions, accepting_answers
 
-async def start_music_round():
-    channel = bot.get_channel(MUSIC_TEXT_CHANNEL)
-    vc_channel = bot.get_channel(MUSIC_VOICE_CHANNEL)
-
-    if not vc_channel:
-        await channel.send("❌ Voice channel not found.")
+    if game_active:
         return
 
-    vc = await vc_channel.connect()
-    await channel.send("🎶 **Welcome to Music Trivia!** Guess the song title as fast as you can!")
+    # read env vars for channels
+    text_channel_id = os.getenv("MUSIC_TEXT_CHANNEL")
+    voice_channel_id = os.getenv("MUSIC_VOICE_CHANNEL")
 
-    songs = await load_spotify_songs()
-    if len(songs) < 10:
-        await channel.send("⚠️ Not enough tracks with preview URLs in the playlist!")
-        await vc.disconnect()
+    if not text_channel_id or not voice_channel_id:
+        print("❌ Missing MUSIC_TEXT_CHANNEL or MUSIC_VOICE_CHANNEL environment variable.")
         return
 
-    random.shuffle(songs)
+    # ensure integers
+    try:
+        text_channel = bot.get_channel(int(text_channel_id))
+        voice_channel = bot.get_channel(int(voice_channel_id))
+    except Exception as e:
+        print(f"❌ Could not access configured channels: {e}")
+        return
 
-    global current_song, answer_found, fastest_answered
+    if not text_channel or not voice_channel:
+        print("❌ Invalid text or voice channel IDs. Check your Railway variables.")
+        return
 
-    for i, song in enumerate(songs[:10], 1):
-        current_song, answer_found, fastest_answered = song, False, False
+    # mark game active and (re)initialise state
+    game_active = True
+    # prepopulate players with all non-bot members' display names and 0 score
+    players = {m.display_name: 0 for m in guild.members if not m.bot}
+    answered_correctly = []
+    answered_this_round = set()
+    accepting_answers = False
 
-        await channel.send(f"▶️ **Song {i}/10** — listen carefully!")
-        vc.play(
-            discord.FFmpegPCMAudio(
-                song["preview_url"],
-                before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
-                options="-vn"
-            )
-        )
-        await asyncio.sleep(10)  # play 10-second preview
-        vc.stop()
+    current_round_questions = random.sample(questions, min(NUMBER_OF_QUESTIONS_PER_ROUND, len(questions)))
 
-        if not answer_found:
-            await channel.send(f"⏰ Time's up! The answer was **{song['title']}** by *{song['artist']}*.")
-        await asyncio.sleep(6)
+    categories = get_round_categories(current_round_questions)
+    await send_embed(text_channel, "\n".join(categories), title="🎯 Next Round Preview")
 
-    await vc.disconnect()
+    await send_embed(text_channel, f"New round about to begin... ⏱️ {len(current_round_questions)} new questions!", title="🧐 Quiz Starting!")
+    await asyncio.sleep(7)
+
+    # connect to voice channel (if not already)
+    vc = None
+    try:
+        # if bot already in a voice channel in this guild, reuse it when possible
+        existing_vc = discord.utils.get(bot.voice_clients, guild=guild)
+        if existing_vc and existing_vc.channel.id == voice_channel.id:
+            vc = existing_vc
+        else:
+            vc = await voice_channel.connect()
+    except Exception as e:
+        await send_embed(text_channel, f"⚠️ Could not connect to voice channel: {e}", title="Connection Error")
+        # continue without audio (still run the quiz as text-only)
+        vc = None
+
+    # Ask questions
+    for index, q in enumerate(current_round_questions, start=1):
+        await ask_single_question(text_channel, index, q, vc)
+        await asyncio.sleep(7)
+
+    # End round and cleanup
+    await end_round(text_channel, guild, vc)
+
+async def ask_single_question(channel, index, q, vc):
+    """
+    Post the question in the configured text channel, play audio if vc provided,
+    accept fuzzy- matched answers from the channel, awarding 15/10/5 to the first 3.
+    """
+    global current_question, current_answer, answered_correctly, answered_this_round, accepting_answers, players
+
+    current_question = q["question"]
+    # normalize the stored canonical answer for fuzzy checking
+    current_answer = q["answer"].lower().strip()
+    answered_correctly = []
+    answered_this_round = set()
+    accepting_answers = True
+
+    await send_embed(channel, f"**Question {index}:**\n{current_question}")
+
+    # try to play the preview if vc available
+    if vc:
+        try:
+            audio_url = get_audio_url(q["url"])
+            if not audio_url:
+                await send_embed(channel, "⚠️ Could not extract audio for this track (maybe blocked).", title="Playback Error")
+            else:
+                await play_preview(vc, audio_url, duration=PREVIEW_DURATION)
+        except Exception as e:
+            await send_embed(channel, f"⚠️ Error playing track: {e}", title="Playback Error")
+
+    # Accept answers for ANSWER_TIMEOUT seconds
+    try:
+        await asyncio.sleep(ANSWER_TIMEOUT)
+    finally:
+        accepting_answers = False
+
+    # After window closes, report results
+    if not answered_correctly:
+        await send_embed(channel, f"No one got it! Correct answer: **{current_answer.title()}**", title="⏰ Time's Up!")
+    else:
+        # Results text listing the first correct answers and points
+        results = "\n".join(f"{i+1}. {p} (+{pts} pts)" for i, (p, pts) in enumerate(answered_correctly))
+        await send_embed(channel, f"Correct answer: **{current_answer.title()}**\n\n{results}", title="✅ Results")
+
+        # Show round scores after results (players sorted by current round points desc)
+        sorted_round_scores = sorted(players.items(), key=lambda x: x[1], reverse=True)
+        round_scores_lines = [f"{i+1}. {name} (+{score})" for i, (name, score) in enumerate(sorted_round_scores)]
+        await send_embed(channel, "\n".join(round_scores_lines), title="📊 Round Scores")
+
+async def end_round(channel, guild, vc):
+    """
+    Finalize the round: award leaderboard, show winners, save leaderboard, disconnect voice, and schedule next round.
+    """
+    global game_active, leaderboard_data, players
+
+    game_active = False
+
+    max_score = max(players.values()) if players else 0
+    winners = [p for p, s in players.items() if s == max_score] if max_score > 0 else []
+
+    if winners:
+        await send_embed(channel, f"Winner: {', '.join(winners)} ({max_score} points)", title="🏁 Round Over!")
+    else:
+        await send_embed(channel, "No winners this round.", title="🏁 Round Over!")
+
+    # Update persistent leaderboard
+    for player, score in players.items():
+        leaderboard_data[player] = leaderboard_data.get(player, 0) + score
+    save_leaderboard(leaderboard_data)
+
     await show_leaderboard(channel)
-    await channel.send("🎵 Round complete! Type `!music` to start another game.")
 
+    await send_embed(channel, f"Next round starts in {DELAY_BETWEEN_ROUNDS} seconds…", title="⏳ Waiting")
+    # disconnect voice client if this script connected it
+    try:
+        if vc and not vc.is_playing():
+            await vc.disconnect()
+    except Exception:
+        pass
 
-@bot.event
-async def on_ready():
-    print(f"{bot.user} is live as the Music Trivia Bot 🎵")
-    # Auto-start on bot ready:
-    await start_music_round()
+    await asyncio.sleep(DELAY_BETWEEN_ROUNDS)
 
+    # Start next round
+    await start_new_round(guild)
 
+async def show_leaderboard(channel, round_over=False):
+    if not leaderboard_data:
+        await send_embed(channel, "Nobody has scored yet.", title="Leaderboard")
+        return
+    sorted_scores = sorted(leaderboard_data.items(), key=lambda x: x[1], reverse=True)
+    lines = [f"**{i+1}. {name} ({score} points)**" for i, (name, score) in enumerate(sorted_scores)]
+    await send_embed(channel, "\n".join(lines), title="🏆 Leaderboard 🏆")
+
+# ---------------- Commands ----------------
+@bot.command()
+async def leaderboard(ctx):
+    await show_leaderboard(ctx.channel)
+
+@bot.command()
+async def endquiz(ctx):
+    global game_active
+    game_active = False
+    await ctx.send("🛑 Quiz ended manually.")
+
+# ---------------- Message handler for fuzzy answers ----------------
 @bot.event
 async def on_message(message):
-    global answer_found, fastest_answered
-
-    if message.author.bot or message.channel.id != MUSIC_TEXT_CHANNEL:
-        return
-
-    if current_song and not answer_found:
-        guess = message.content.lower()
-        correct = current_song["answer"].lower()
-        ratio = fuzz.partial_ratio(guess, correct)
-        if ratio >= 80:
-            answer_found = True
-            user = message.author
-
-            if not fastest_answered:
-                fastest_answered = True
-                scores[user] = scores.get(user, 0) + 15  # 10 pts + 5 bonus
-                await message.channel.send(
-                    f"⚡ {user.mention} got it first! **{current_song['title']}** (+15 pts)"
-                )
-            else:
-                scores[user] = scores.get(user, 0) + 10
-                await message.channel.send(
-                    f"✅ {user.mention} got it! **{current_song['title']}** (+10 pts)"
-                )
+    global answered_correctly, accepting_answers, players, answered_this_round
 
     await bot.process_commands(message)
 
-
-async def show_leaderboard(channel):
-    if not scores:
-        await channel.send("No correct answers this round.")
+    # Only accept answers when a game is active, accepting answers, and in the configured text channel
+    if (
+        message.author.bot
+        or not game_active
+        or not accepting_answers
+    ):
         return
 
-    sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-    leaderboard = "\n".join(
-        [f"**{i+1}. {user.display_name}** — {points} pts" for i, (user, points) in enumerate(sorted_scores)]
-    )
-    await channel.send(f"🏆 **Final Leaderboard:**\n{leaderboard}")
+    # ensure we're in the configured text channel
+    try:
+        text_channel_id = int(os.getenv("MUSIC_TEXT_CHANNEL") or 0)
+    except:
+        text_channel_id = 0
 
+    if message.channel.id != text_channel_id:
+        return
 
-@bot.command(name="music")
-async def manual_start(ctx):
-    await ctx.send("🎧 Starting a new music trivia round!")
-    await start_music_round()
+    user_answer = message.content.strip().lower()
+    match_score = fuzz.ratio(user_answer, current_answer) if current_answer else 0
 
-print("Token:", TOKEN)
-if not TOKEN:
-    print("ERROR: MUSIC_DISCORD_TOKEN is not set or is empty!")
-    exit(1)
-bot.run(TOKEN)
+    # Accept first three correct with decreasing points: 15, 10, 5
+    if match_score >= FUZZ_THRESHOLD and message.author.id not in answered_this_round and len(answered_correctly) < 3:
+        answered_this_round.add(message.author.id)
+        player = message.author.display_name
+        points_awarded = [15, 10, 5][len(answered_correctly)]
+
+        if player not in players:
+            players[player] = 0
+
+        players[player] += points_awarded
+        answered_correctly.append((player, points_awarded))
+
+# ---------------- Startup ----------------
+@bot.event
+async def on_ready():
+    print(f"✅ Logged in as {bot.user}!")
+    # find a guild to run in (assume the bot is in one guild for this service)
+    guild = bot.guilds[0] if bot.guilds else None
+    if not guild:
+        print("❌ Bot is not in any guilds. Add it to your server and restart.")
+        return
+
+    # Start the first round shortly after ready
+    await asyncio.sleep(3)
+    await start_new_round(guild)
+
+# ---------------- Run ----------------
+if __name__ == "__main__":
+    load_dotenv()  # harmless if Railway env vars are used
+    token = os.getenv("DISCORD_TOKEN")
+    if not token:
+        print("❌ Error: DISCORD_TOKEN environment variable not found!")
+    else:
+        bot.run(token)
