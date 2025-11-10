@@ -8,16 +8,16 @@ import asyncio
 from rapidfuzz import fuzz
 import yt_dlp
 
-# ---------------- Config / Constants ----------------
 LEADERBOARD_FILE = "leaderboard.json"
-QUESTIONS_FILE = "songs.json"
+QUESTIONS_FILE = "songs.json"  # <-- your music questions file
+
 NUMBER_OF_QUESTIONS_PER_ROUND = 10
 DELAY_BETWEEN_ROUNDS = 30  # seconds between rounds
 ANSWER_TIMEOUT = 10  # seconds to answer each question
 PREVIEW_DURATION = 7  # seconds of audio to play
 FUZZ_THRESHOLD = 85  # rapidfuzz ratio threshold for accepting an answer
 
-# ---------------- Helper: load questions ----------------
+# Load music questions (with "url" field)
 def load_questions():
     try:
         with open(QUESTIONS_FILE, "r", encoding="utf-8") as f:
@@ -33,7 +33,6 @@ def load_questions():
 
 questions = load_questions()
 
-# ---------------- Leaderboard persistence ----------------
 def load_leaderboard():
     if os.path.exists(LEADERBOARD_FILE):
         try:
@@ -50,12 +49,10 @@ def save_leaderboard(data):
 
 leaderboard_data = load_leaderboard()
 
-# ---------------- Discord bot setup ----------------
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# runtime state
 current_question = None
 current_answer = None
 players = {}
@@ -65,56 +62,43 @@ answered_correctly = []
 answered_this_round = set()
 accepting_answers = False
 
-# ---------------- Embed helper (stylistic uniformity) ----------------
 async def send_embed(channel, message, title=None, color=0x3498db):
     embed = discord.Embed(description=message, color=color)
     if title:
         embed.title = title
     await channel.send(embed=embed)
 
-# ---------------- Category helpers ----------------
 def get_category_from_question(question_text):
     return question_text.split("\n")[0].strip()
 
 def get_round_categories(questions_list):
     return [get_category_from_question(q["question"]) for q in questions_list]
 
-# ---------------- yt-dlp audio fetch ----------------
+# yt-dlp audio extraction
 def get_audio_url(yt_url):
     ydl_opts = {
         "format": "bestaudio/best",
         "quiet": True,
         "skip_download": True,
-        "no_warnings": True
+        "no_warnings": True,
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(yt_url, download=False)
-        # info['url'] is the direct media url
         return info.get("url")
 
-# ---------------- audio playback ----------------
+# Play 7-second preview
 async def play_preview(vc, audio_url, duration=PREVIEW_DURATION):
-    try:
-        source = discord.FFmpegPCMAudio(audio_url, before_options=f"-ss 0 -t {duration}", options="-vn")
-        vc.play(source)
-        while vc.is_playing():
-            await asyncio.sleep(0.5)
-    except Exception as e:
-        # raise to upper layer for consistent error handling
-        raise e
+    source = discord.FFmpegPCMAudio(audio_url, before_options=f"-ss 0 -t {duration}", options="-vn")
+    vc.play(source)
+    while vc.is_playing():
+        await asyncio.sleep(0.5)
 
-# ---------------- Quiz flow (auto-start + rounds) ----------------
 async def start_new_round(guild):
-    """
-    Starts a new music quiz round using environment-configured text/voice channels.
-    This function both auto-starts on_ready and is called again after DELAY_BETWEEN_ROUNDS.
-    """
     global game_active, players, answered_correctly, answered_this_round, current_round_questions, accepting_answers
 
     if game_active:
         return
 
-    # read env vars for channels
     text_channel_id = os.getenv("MUSIC_TEXT_CHANNEL")
     voice_channel_id = os.getenv("MUSIC_VOICE_CHANNEL")
 
@@ -122,7 +106,6 @@ async def start_new_round(guild):
         print("❌ Missing MUSIC_TEXT_CHANNEL or MUSIC_VOICE_CHANNEL environment variable.")
         return
 
-    # ensure integers
     try:
         text_channel = bot.get_channel(int(text_channel_id))
         voice_channel = bot.get_channel(int(voice_channel_id))
@@ -134,9 +117,7 @@ async def start_new_round(guild):
         print("❌ Invalid text or voice channel IDs. Check your Railway variables.")
         return
 
-    # mark game active and (re)initialise state
     game_active = True
-    # prepopulate players with all non-bot members' display names and 0 score
     players = {m.display_name: 0 for m in guild.members if not m.bot}
     answered_correctly = []
     answered_this_round = set()
@@ -146,14 +127,11 @@ async def start_new_round(guild):
 
     categories = get_round_categories(current_round_questions)
     await send_embed(text_channel, "\n".join(categories), title="🎯 Next Round Preview")
-
     await send_embed(text_channel, f"New round about to begin... ⏱️ {len(current_round_questions)} new questions!", title="🧐 Quiz Starting!")
     await asyncio.sleep(7)
 
-    # connect to voice channel (if not already)
     vc = None
     try:
-        # if bot already in a voice channel in this guild, reuse it when possible
         existing_vc = discord.utils.get(bot.voice_clients, guild=guild)
         if existing_vc and existing_vc.channel.id == voice_channel.id:
             vc = existing_vc
@@ -161,26 +139,18 @@ async def start_new_round(guild):
             vc = await voice_channel.connect()
     except Exception as e:
         await send_embed(text_channel, f"⚠️ Could not connect to voice channel: {e}", title="Connection Error")
-        # continue without audio (still run the quiz as text-only)
-        vc = None
+        vc = None  # allow quiz to proceed text-only
 
-    # Ask questions
     for index, q in enumerate(current_round_questions, start=1):
         await ask_single_question(text_channel, index, q, vc)
         await asyncio.sleep(7)
 
-    # End round and cleanup
     await end_round(text_channel, guild, vc)
 
 async def ask_single_question(channel, index, q, vc):
-    """
-    Post the question in the configured text channel, play audio if vc provided,
-    accept fuzzy- matched answers from the channel, awarding 15/10/5 to the first 3.
-    """
     global current_question, current_answer, answered_correctly, answered_this_round, accepting_answers, players
 
     current_question = q["question"]
-    # normalize the stored canonical answer for fuzzy checking
     current_answer = q["answer"].lower().strip()
     answered_correctly = []
     answered_this_round = set()
@@ -188,7 +158,6 @@ async def ask_single_question(channel, index, q, vc):
 
     await send_embed(channel, f"**Question {index}:**\n{current_question}")
 
-    # try to play the preview if vc available
     if vc:
         try:
             audio_url = get_audio_url(q["url"])
@@ -199,29 +168,22 @@ async def ask_single_question(channel, index, q, vc):
         except Exception as e:
             await send_embed(channel, f"⚠️ Error playing track: {e}", title="Playback Error")
 
-    # Accept answers for ANSWER_TIMEOUT seconds
     try:
         await asyncio.sleep(ANSWER_TIMEOUT)
     finally:
         accepting_answers = False
 
-    # After window closes, report results
     if not answered_correctly:
         await send_embed(channel, f"No one got it! Correct answer: **{current_answer.title()}**", title="⏰ Time's Up!")
     else:
-        # Results text listing the first correct answers and points
         results = "\n".join(f"{i+1}. {p} (+{pts} pts)" for i, (p, pts) in enumerate(answered_correctly))
         await send_embed(channel, f"Correct answer: **{current_answer.title()}**\n\n{results}", title="✅ Results")
 
-        # Show round scores after results (players sorted by current round points desc)
         sorted_round_scores = sorted(players.items(), key=lambda x: x[1], reverse=True)
         round_scores_lines = [f"{i+1}. {name} (+{score})" for i, (name, score) in enumerate(sorted_round_scores)]
         await send_embed(channel, "\n".join(round_scores_lines), title="📊 Round Scores")
 
 async def end_round(channel, guild, vc):
-    """
-    Finalize the round: award leaderboard, show winners, save leaderboard, disconnect voice, and schedule next round.
-    """
     global game_active, leaderboard_data, players
 
     game_active = False
@@ -234,7 +196,6 @@ async def end_round(channel, guild, vc):
     else:
         await send_embed(channel, "No winners this round.", title="🏁 Round Over!")
 
-    # Update persistent leaderboard
     for player, score in players.items():
         leaderboard_data[player] = leaderboard_data.get(player, 0) + score
     save_leaderboard(leaderboard_data)
@@ -242,7 +203,6 @@ async def end_round(channel, guild, vc):
     await show_leaderboard(channel)
 
     await send_embed(channel, f"Next round starts in {DELAY_BETWEEN_ROUNDS} seconds…", title="⏳ Waiting")
-    # disconnect voice client if this script connected it
     try:
         if vc and not vc.is_playing():
             await vc.disconnect()
@@ -250,8 +210,6 @@ async def end_round(channel, guild, vc):
         pass
 
     await asyncio.sleep(DELAY_BETWEEN_ROUNDS)
-
-    # Start next round
     await start_new_round(guild)
 
 async def show_leaderboard(channel, round_over=False):
@@ -262,7 +220,6 @@ async def show_leaderboard(channel, round_over=False):
     lines = [f"**{i+1}. {name} ({score} points)**" for i, (name, score) in enumerate(sorted_scores)]
     await send_embed(channel, "\n".join(lines), title="🏆 Leaderboard 🏆")
 
-# ---------------- Commands ----------------
 @bot.command()
 async def leaderboard(ctx):
     await show_leaderboard(ctx.channel)
@@ -273,14 +230,12 @@ async def endquiz(ctx):
     game_active = False
     await ctx.send("🛑 Quiz ended manually.")
 
-# ---------------- Message handler for fuzzy answers ----------------
 @bot.event
 async def on_message(message):
     global answered_correctly, accepting_answers, players, answered_this_round
 
     await bot.process_commands(message)
 
-    # Only accept answers when a game is active, accepting answers, and in the configured text channel
     if (
         message.author.bot
         or not game_active
@@ -288,7 +243,6 @@ async def on_message(message):
     ):
         return
 
-    # ensure we're in the configured text channel
     try:
         text_channel_id = int(os.getenv("MUSIC_TEXT_CHANNEL") or 0)
     except:
@@ -300,7 +254,6 @@ async def on_message(message):
     user_answer = message.content.strip().lower()
     match_score = fuzz.ratio(user_answer, current_answer) if current_answer else 0
 
-    # Accept first three correct with decreasing points: 15, 10, 5
     if match_score >= FUZZ_THRESHOLD and message.author.id not in answered_this_round and len(answered_correctly) < 3:
         answered_this_round.add(message.author.id)
         player = message.author.display_name
@@ -312,23 +265,18 @@ async def on_message(message):
         players[player] += points_awarded
         answered_correctly.append((player, points_awarded))
 
-# ---------------- Startup ----------------
 @bot.event
 async def on_ready():
     print(f"✅ Logged in as {bot.user}!")
-    # find a guild to run in (assume the bot is in one guild for this service)
     guild = bot.guilds[0] if bot.guilds else None
     if not guild:
         print("❌ Bot is not in any guilds. Add it to your server and restart.")
         return
-
-    # Start the first round shortly after ready
     await asyncio.sleep(3)
     await start_new_round(guild)
 
-# ---------------- Run ----------------
 if __name__ == "__main__":
-    load_dotenv()  # harmless if Railway env vars are used
+    load_dotenv()
     token = os.getenv("DISCORD_TOKEN")
     if not token:
         print("❌ Error: DISCORD_TOKEN environment variable not found!")
