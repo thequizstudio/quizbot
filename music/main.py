@@ -10,7 +10,7 @@ import yt_dlp
 
 # ---------------- Config / Constants ----------------
 LEADERBOARD_FILE = "leaderboard.json"
-QUESTIONS_FILE = "music_questions.json"
+QUESTIONS_FILE = "songs.json"
 NUMBER_OF_QUESTIONS_PER_ROUND = 10
 DELAY_BETWEEN_ROUNDS = 30  # seconds between rounds
 ANSWER_TIMEOUT = 10  # seconds to answer each question
